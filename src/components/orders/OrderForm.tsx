@@ -13,6 +13,7 @@ import {
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -166,6 +167,7 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
             <DialogContent className="max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Create New Order</DialogTitle>
+                    <DialogDescription>Enter the details for the new customer order.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto">
                     <div className="space-y-2">

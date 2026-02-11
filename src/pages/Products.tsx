@@ -309,6 +309,7 @@ export default function Products() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Product to Source</DialogTitle>
+            <DialogDescription>Configure pricing for a new product at this location.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div className="space-y-2">
@@ -362,6 +363,7 @@ export default function Products() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Product Pricing</DialogTitle>
+            <DialogDescription>Update the cost and selling prices for this product.</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div className="space-y-2">
