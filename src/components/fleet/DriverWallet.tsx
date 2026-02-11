@@ -19,7 +19,7 @@ import { Plus, History, Wallet, ArrowUpRight, ArrowDownLeft } from "lucide-react
 import { Database } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 
-type TransactionType = Database["public"]["Enums"]["driver_transaction_type"];
+type TransactionType = Database["public"]["Enums"]["transaction_type"];
 
 interface DriverWalletProps {
     driverId: string;
