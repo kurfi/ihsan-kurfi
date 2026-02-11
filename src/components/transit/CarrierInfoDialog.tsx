@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
@@ -75,7 +76,8 @@ export function CarrierInfoDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Update Carrier Information</DialogTitle>
+                    <DialogTitle>Carrier & Transit Information</DialogTitle>
+                    <DialogDescription>Details about the transit status and carrier assignments.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">

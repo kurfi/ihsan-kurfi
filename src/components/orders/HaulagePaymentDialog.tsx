@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
@@ -21,35 +22,34 @@ export function HaulagePaymentDialog() {
     const { data: suppliers = [] } = useSuppliers();
     const [open, setOpen] = useState(false);
     const [form, setForm] = useState({
-        supplier_id: "",
-        amount: "",
+        amount_received: "",
         payment_date: new Date().toISOString().split('T')[0],
-        reference_number: "",
+        payment_reference: "",
+        period_covered: "",
         notes: "",
     });
 
     const handleAddPayment = () => {
-        if (!form.supplier_id || !form.amount) {
-            toast({ title: "Missing required fields", variant: "destructive" });
+        if (!form.amount_received) {
+            toast({ title: "Missing amount", variant: "destructive" });
             return;
         }
 
         addPayment.mutate(
             {
-                // Note: haulage_payments table expects supplier_id (UUID)
-                supplier_id: form.supplier_id,
-                amount: parseFloat(form.amount),
+                amount_received: parseFloat(form.amount_received),
                 payment_date: form.payment_date,
-                reference_number: form.reference_number || undefined,
+                payment_reference: form.payment_reference || undefined,
+                period_covered: form.period_covered || undefined,
                 notes: form.notes || undefined,
             },
             {
                 onSuccess: () => {
                     setForm({
-                        supplier_id: "",
-                        amount: "",
+                        amount_received: "",
                         payment_date: new Date().toISOString().split('T')[0],
-                        reference_number: "",
+                        payment_reference: "",
+                        period_covered: "",
                         notes: "",
                     });
                     setOpen(false);
@@ -68,28 +68,15 @@ export function HaulagePaymentDialog() {
             <DialogContent className="max-w-md">
                 <DialogHeader>
                     <DialogTitle>Record Haulage Payment (from Dangote/Supplier)</DialogTitle>
+                    <DialogDescription>Record a payment received for haulage services from the manufacturer.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                        <Label>Manufacturer (Supplier) *</Label>
-                        <select
-                            className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                            value={form.supplier_id}
-                            onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
-                        >
-                            <option value="">Select manufacturer</option>
-                            {suppliers.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Amount (₦) *</Label>
+                        <Label>Amount Received (₦) *</Label>
                         <Input
                             type="number"
-                            value={form.amount}
-                            onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                            value={form.amount_received}
+                            onChange={(e) => setForm({ ...form, amount_received: e.target.value })}
                             placeholder="Enter payment amount"
                         />
                     </div>
@@ -106,9 +93,18 @@ export function HaulagePaymentDialog() {
                     <div className="space-y-2">
                         <Label>Reference Number</Label>
                         <Input
-                            value={form.reference_number}
-                            onChange={(e) => setForm({ ...form, reference_number: e.target.value })}
+                            value={form.payment_reference}
+                            onChange={(e) => setForm({ ...form, payment_reference: e.target.value })}
                             placeholder="e.g. DANG-PYMT-001"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Period Covered</Label>
+                        <Input
+                            value={form.period_covered}
+                            onChange={(e) => setForm({ ...form, period_covered: e.target.value })}
+                            placeholder="e.g. January 2024"
                         />
                     </div>
 
@@ -124,7 +120,7 @@ export function HaulagePaymentDialog() {
                     <LoadingButton
                         onClick={handleAddPayment}
                         className="w-full"
-                        disabled={!form.supplier_id || !form.amount}
+                        disabled={!form.amount_received}
                         isLoading={addPayment.isPending}
                     >
                         Save Payment record

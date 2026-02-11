@@ -17,10 +17,10 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -372,11 +372,7 @@ export default function Fleet() {
                 <DialogContent className="max-w-2xl max-h-[90vh]">
                   <DialogHeader>
                     <DialogTitle>Add New Truck</DialogTitle>
-                    <div className="hidden">
-                      <DialogDescription>
-                        Enter truck details including plate number, model, and capacity.
-                      </DialogDescription>
-                    </div>
+                    <DialogDescription>Register a new vehicle in the fleet.</DialogDescription>
                   </DialogHeader>
                   <ScrollArea className="max-h-[70vh] pr-4">
                     <div className="space-y-6 py-4">
@@ -669,11 +665,7 @@ export default function Fleet() {
                 <DialogContent className="max-w-2xl max-h-[90vh]">
                   <DialogHeader>
                     <DialogTitle>Add New Driver</DialogTitle>
-                    <div className="hidden">
-                      <DialogDescription>
-                        Enter driver's personal information and license details.
-                      </DialogDescription>
-                    </div>
+                    <DialogDescription>Register a new driver for the fleet.</DialogDescription>
                   </DialogHeader>
                   <ScrollArea className="max-h-[70vh] pr-4">
                     <div className="space-y-6 py-4">
@@ -1072,6 +1064,7 @@ export default function Fleet() {
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Add New Document</DialogTitle>
+                    <DialogDescription>Upload or record a new compliance document.</DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -1290,9 +1283,7 @@ export default function Fleet() {
         <DialogContent className="max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Truck</DialogTitle>
-            <div className="hidden">
-              <DialogDescription>Update truck details.</DialogDescription>
-            </div>
+            <DialogDescription>Update vehicle and maintenance information.</DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] pr-4">
             <div className="space-y-6 py-4">
@@ -1433,9 +1424,7 @@ export default function Fleet() {
         <DialogContent className="max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Driver</DialogTitle>
-            <div className="hidden">
-              <DialogDescription>Update driver details.</DialogDescription>
-            </div>
+            <DialogDescription>Update driver personal and license information.</DialogDescription>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh] pr-4">
             <div className="space-y-6 py-4">

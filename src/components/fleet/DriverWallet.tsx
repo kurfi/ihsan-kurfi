@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDriverTransactions, useAddDriverTransaction } from "@/hooks/useFleet";
 import { format } from "date-fns";
@@ -81,7 +88,8 @@ export function DriverWallet({ driverId }: DriverWalletProps) {
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Record Transaction</DialogTitle>
+                            <DialogTitle>Add Transaction</DialogTitle>
+                            <DialogDescription>Record a new deposit or deduction for the driver's wallet.</DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">

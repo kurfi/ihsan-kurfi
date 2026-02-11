@@ -1,6 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,7 +135,8 @@ export function ReconciliationDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px] bg-[#1A1F2C] border-gray-800 text-white">
                 <DialogHeader>
-                    <DialogTitle>Order Reconciliation</DialogTitle>
+                    <DialogTitle>Reconcile Shortage</DialogTitle>
+                    <DialogDescription className="text-gray-400">Record deductions for missing or damaged goods.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="flex flex-col items-center gap-4 py-2 bg-[#2A2F3C]/50 rounded-lg border border-gray-800">

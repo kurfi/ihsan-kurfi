@@ -457,7 +457,10 @@ export default function Orders() {
         {/* Order Detail Dialog */}
         <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
           <DialogContent className="max-w-md">
-            <DialogHeader><DialogTitle>Order Details</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Order Details</DialogTitle>
+              <DialogDescription>Overview and profit analysis for this order.</DialogDescription>
+            </DialogHeader>
             {selectedOrderData && (
               <div className="space-y-4 pt-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -483,7 +486,10 @@ export default function Orders() {
         {/* Edit Order Dialog */}
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-lg overflow-y-auto max-h-[80vh]">
-            <DialogHeader><DialogTitle>Edit Trip / Order</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Edit Trip / Order</DialogTitle>
+              <DialogDescription>Update order information and notes.</DialogDescription>
+            </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Waybill Number</Label><Input value={editForm.waybill_number} onChange={(e) => setEditForm({ ...editForm, waybill_number: e.target.value })} /></div>
@@ -502,7 +508,10 @@ export default function Orders() {
         {/* Assign Fleet Dialog */}
         <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
           <DialogContent>
-            <DialogHeader><DialogTitle>Assign Fleet Unit</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Assign Fleet Unit</DialogTitle>
+              <DialogDescription>Select a truck and driver to dispatch this order.</DialogDescription>
+            </DialogHeader>
             <div className="space-y-4 py-4">
               <Select value={assignForm.truck_id} onValueChange={(tId) => setAssignForm({ truck_id: tId, driver_id: trucks.find(t => t.id === tId)?.driver_id || "" })}>
                 <SelectTrigger><SelectValue placeholder="Select available truck" /></SelectTrigger>

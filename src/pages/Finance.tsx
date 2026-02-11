@@ -21,6 +21,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -422,6 +423,7 @@ export default function Finance() {
                     <DialogContent>
                       <DialogHeader>
                         <DialogTitle>Record Order Payments</DialogTitle>
+                        <DialogDescription>Record a payment received from a customer for a specific order.</DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
                         <div className="space-y-2">
@@ -661,6 +663,7 @@ export default function Finance() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Log Expense</DialogTitle>
+                      <DialogDescription>Record a new company expense.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
@@ -823,6 +826,7 @@ export default function Finance() {
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Add Payment Account</DialogTitle>
+                      <DialogDescription>Add a new bank account for receiving payments.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
@@ -939,6 +943,7 @@ export default function Finance() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Payment</DialogTitle>
+            <DialogDescription>Update the details of an existing payment record.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1042,6 +1047,7 @@ export default function Finance() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Expense</DialogTitle>
+            <DialogDescription>Modify an existing expense record.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1100,6 +1106,7 @@ export default function Finance() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Payment Account</DialogTitle>
+            <DialogDescription>Update bank account information.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">

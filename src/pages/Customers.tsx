@@ -12,10 +12,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -261,11 +261,7 @@ export default function Customers() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add New Customer</DialogTitle>
-                  <div className="hidden">
-                    <DialogDescription>
-                      Fill in the details below to add a new customer to the system.
-                    </DialogDescription>
-                  </div>
+                  <DialogDescription>Create a new customer profile to track orders and balances.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
@@ -556,11 +552,7 @@ export default function Customers() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Customer</DialogTitle>
-            <div className="hidden">
-              <DialogDescription>
-                Update the customer details below.
-              </DialogDescription>
-            </div>
+            <DialogDescription>Update customer contact details and credit settings.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
