@@ -332,8 +332,13 @@ export type Database = {
       inventory: {
         Row: {
           cement_type: string
+          cost_price_bag: number | null
+          cost_price_ton: number | null
           created_at: string | null
           depot_id: string
+          end_user_price_bag: number | null
+          end_user_price_ton: number | null
+          factory_purchase_price: number | null
           id: string
           last_updated: string | null
           price_end_user: number | null
@@ -341,13 +346,24 @@ export type Database = {
           price_wholesale: number | null
           quantity: number
           quantity_reserved: number | null
+          retail_price_bag: number | null
+          retail_price_ton: number | null
           sale_price: number | null
+          selling_price_bag: number | null
+          selling_price_ton: number | null
           unit: Database["public"]["Enums"]["product_unit"]
+          wholesale_price_bag: number | null
+          wholesale_price_ton: number | null
         }
         Insert: {
           cement_type: string
+          cost_price_bag?: number | null
+          cost_price_ton?: number | null
           created_at?: string | null
           depot_id: string
+          end_user_price_bag?: number | null
+          end_user_price_ton?: number | null
+          factory_purchase_price?: number | null
           id?: string
           last_updated?: string | null
           price_end_user?: number | null
@@ -355,13 +371,24 @@ export type Database = {
           price_wholesale?: number | null
           quantity?: number
           quantity_reserved?: number | null
+          retail_price_bag?: number | null
+          retail_price_ton?: number | null
           sale_price?: number | null
+          selling_price_bag?: number | null
+          selling_price_ton?: number | null
           unit: Database["public"]["Enums"]["product_unit"]
+          wholesale_price_bag?: number | null
+          wholesale_price_ton?: number | null
         }
         Update: {
           cement_type?: string
+          cost_price_bag?: number | null
+          cost_price_ton?: number | null
           created_at?: string | null
           depot_id?: string
+          end_user_price_bag?: number | null
+          end_user_price_ton?: number | null
+          factory_purchase_price?: number | null
           id?: string
           last_updated?: string | null
           price_end_user?: number | null
@@ -369,8 +396,14 @@ export type Database = {
           price_wholesale?: number | null
           quantity?: number
           quantity_reserved?: number | null
+          retail_price_bag?: number | null
+          retail_price_ton?: number | null
           sale_price?: number | null
+          selling_price_bag?: number | null
+          selling_price_ton?: number | null
           unit?: Database["public"]["Enums"]["product_unit"]
+          wholesale_price_bag?: number | null
+          wholesale_price_ton?: number | null
         }
         Relationships: [
           {
