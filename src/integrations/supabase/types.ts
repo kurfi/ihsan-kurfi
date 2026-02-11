@@ -452,6 +452,7 @@ export type Database = {
           driver_allowance: number | null
           other_trip_costs: number | null
           sales_price_per_unit: number | null
+          atc_number: string | null
         }
         Insert: {
           cap_number?: string | null
@@ -485,6 +486,7 @@ export type Database = {
           driver_allowance?: number | null
           other_trip_costs?: number | null
           sales_price_per_unit?: number | null
+          atc_number?: string | null
         }
         Update: {
           cap_number?: string | null
@@ -518,6 +520,7 @@ export type Database = {
           driver_allowance?: number | null
           other_trip_costs?: number | null
           sales_price_per_unit?: number | null
+          atc_number?: string | null
         }
         Relationships: [
           {

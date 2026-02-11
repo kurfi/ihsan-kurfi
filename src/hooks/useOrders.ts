@@ -19,6 +19,7 @@ export interface Order {
   cement_type: string;
   quantity: number;
   unit: ProductUnit;
+  atc_number: string | null;
   cap_number: string | null;
   gate_pass_number: string | null;
   loading_manifest_number: string | null;
@@ -127,6 +128,8 @@ export function useCreateOrder() {
       cement_purchase_price?: number;
       cement_sale_price?: number;
       payment_terms?: string;
+      atc_number?: string;
+      cap_number?: string;
     }) => {
       // 1. Depot Dispatch Logic - DROPSHIPPING UPDATE: No local stock reservation.
       // We process the order directly.
@@ -334,6 +337,8 @@ export function useUpdateOrder() {
       cement_purchase_price?: number;
       cement_sale_price?: number;
       payment_terms?: string;
+      atc_number?: string;
+      cap_number?: string;
     }) => {
       // 1. Update Order fields (including transport_cost)
       const { data, error } = await supabase

@@ -52,6 +52,8 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         is_direct_drop: true,
         notes: "",
         waybill_number: "",
+        atc_number: "",
+        cap_number: "",
     });
 
     const [automatedPricing, setAutomatedPricing] = useState({
@@ -74,13 +76,19 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         const priceTier = customer?.price_tier || "End-User";
 
         if (matchingProduct) {
-            let salePrice = matchingProduct.sale_price || 0;
-            if (priceTier === "Wholesaler") salePrice = matchingProduct.price_wholesale || salePrice;
-            else if (priceTier === "Retailer") salePrice = matchingProduct.price_retail || salePrice;
-            else if (priceTier === "End-User") salePrice = matchingProduct.price_end_user || salePrice;
+            let salePrice = 0;
+            let costPrice = 0;
+
+            if (form.unit === "tons") {
+                costPrice = matchingProduct.cost_price_ton || 0;
+                salePrice = matchingProduct.selling_price_ton || costPrice;
+            } else {
+                costPrice = matchingProduct.cost_price_bag || 0;
+                salePrice = matchingProduct.selling_price_bag || costPrice;
+            }
 
             setAutomatedPricing({
-                purchase_price: matchingProduct.sale_price || 0, // In inventory table, 'sale_price' is often the base cost
+                purchase_price: costPrice,
                 sale_price: salePrice
             });
         } else {
@@ -102,6 +110,8 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
             is_direct_drop: true,
             notes: "",
             waybill_number: "",
+            atc_number: "",
+            cap_number: "",
         });
         setAutomatedPricing({ purchase_price: 0, sale_price: 0 });
     };
@@ -131,6 +141,8 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
                 notes: form.notes || undefined,
                 is_direct_drop: form.is_direct_drop,
                 waybill_number: form.waybill_number || undefined,
+                atc_number: form.atc_number || undefined,
+                cap_number: form.cap_number || undefined,
                 cement_purchase_price: purchasePrice,
                 cement_sale_price: salePrice,
                 payment_terms: form.payment_terms,
@@ -237,6 +249,25 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
                                 value={form.waybill_number}
                                 onChange={(e) => setForm({ ...form, waybill_number: e.target.value })}
                                 placeholder="e.g. WB12345"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>ATC Number</Label>
+                            <Input
+                                value={form.atc_number}
+                                onChange={(e) => setForm({ ...form, atc_number: e.target.value })}
+                                placeholder="e.g. ATC12345"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>CAP Number</Label>
+                            <Input
+                                value={form.cap_number}
+                                onChange={(e) => setForm({ ...form, cap_number: e.target.value })}
+                                placeholder="e.g. CAP12345"
                             />
                         </div>
                     </div>

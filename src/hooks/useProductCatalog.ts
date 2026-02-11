@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 export interface Depot {
   id: string;
   name: string;
-  location: string | null;
+  address: string | null;
   created_at: string;
 }
 
@@ -15,12 +15,12 @@ export interface InventoryItem {
   cement_type: string;
   quantity: number;
   unit: "tons" | "bags";
-  sale_price?: number;
-  price_wholesale?: number;
-  price_retail?: number;
-  price_end_user?: number;
+  cost_price_ton?: number;
+  selling_price_ton?: number;
+  cost_price_bag?: number;
+  selling_price_bag?: number;
   last_updated: string;
-  depot?: { name: string; location: string | null };
+  depot?: { name: string; address: string | null };
 }
 
 export function useDepots() {
@@ -45,7 +45,7 @@ export function useProducts() {
         .from("inventory")
         .select(`
           *,
-          depot:depots(name, location)
+          depot:depots(name, address)
         `)
         .order("depot_id");
       if (error) throw error;
@@ -84,7 +84,7 @@ export function useAddDepot() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (depot: { name: string; location?: string }) => {
+    mutationFn: async (depot: { name: string; address?: string }) => {
       const { data, error } = await supabase
         .from("depots")
         .insert(depot)

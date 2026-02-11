@@ -25,15 +25,14 @@ export default function Products() {
   const deleteProduct = useDeleteInventory();
 
   // State
-  const [depotForm, setDepotForm] = useState({ name: "", location: "" });
+  const [depotForm, setDepotForm] = useState({ name: "", address: "" });
   const [itemForm, setItemForm] = useState({
     depot_id: "",
     cement_type: "",
-    unit: "tons" as "tons" | "bags",
-    sale_price: "",
-    price_wholesale: "",
-    price_retail: "",
-    price_end_user: "",
+    cost_price_ton: "",
+    selling_price_ton: "",
+    cost_price_bag: "",
+    selling_price_bag: "",
   });
 
   const [addDepotOpen, setAddDepotOpen] = useState(false);
@@ -46,7 +45,7 @@ export default function Products() {
     addDepot.mutate(depotForm, {
       onSuccess: () => {
         setAddDepotOpen(false);
-        setDepotForm({ name: "", location: "" });
+        setDepotForm({ name: "", address: "" });
       }
     });
   };
@@ -55,19 +54,22 @@ export default function Products() {
     addProduct.mutate({
       depot_id: itemForm.depot_id,
       cement_type: itemForm.cement_type,
-      unit: itemForm.unit,
-      sale_price: parseFloat(itemForm.sale_price) || 0,
-    }, {
+      cost_price_ton: parseFloat(itemForm.cost_price_ton) || 0,
+      selling_price_ton: parseFloat(itemForm.selling_price_ton) || 0,
+      cost_price_bag: parseFloat(itemForm.cost_price_bag) || 0,
+      selling_price_bag: parseFloat(itemForm.selling_price_bag) || 0,
+      unit: "tons", // default unit
+      quantity: 0,
+    } as any, {
       onSuccess: () => {
         setAddItemOpen(false);
         setItemForm({
           depot_id: "",
           cement_type: "",
-          unit: "tons",
-          sale_price: "",
-          price_wholesale: "",
-          price_retail: "",
-          price_end_user: "",
+          cost_price_ton: "",
+          selling_price_ton: "",
+          cost_price_bag: "",
+          selling_price_bag: "",
         });
       }
     });
@@ -78,11 +80,10 @@ export default function Products() {
     updateProduct.mutate({
       id: editingItemId,
       cement_type: itemForm.cement_type,
-      unit: itemForm.unit as "tons" | "bags",
-      sale_price: parseFloat(itemForm.sale_price) || 0,
-      price_wholesale: parseFloat(itemForm.price_wholesale) || 0,
-      price_retail: parseFloat(itemForm.price_retail) || 0,
-      price_end_user: parseFloat(itemForm.price_end_user) || 0,
+      cost_price_ton: parseFloat(itemForm.cost_price_ton) || 0,
+      selling_price_ton: parseFloat(itemForm.selling_price_ton) || 0,
+      cost_price_bag: parseFloat(itemForm.cost_price_bag) || 0,
+      selling_price_bag: parseFloat(itemForm.selling_price_bag) || 0,
     }, {
       onSuccess: () => {
         setEditItemOpen(false);
@@ -90,18 +91,17 @@ export default function Products() {
         setItemForm({
           depot_id: "",
           cement_type: "",
-          unit: "tons",
-          sale_price: "",
-          price_wholesale: "",
-          price_retail: "",
-          price_end_user: "",
+          cost_price_ton: "",
+          selling_price_ton: "",
+          cost_price_bag: "",
+          selling_price_bag: "",
         });
       }
     });
   };
 
   const handleOpenAddItem = (depotId: string) => {
-    setItemForm({ ...itemForm, depot_id: depotId, sale_price: "" });
+    setItemForm({ ...itemForm, depot_id: depotId });
     setAddItemOpen(true);
   };
 
@@ -110,11 +110,10 @@ export default function Products() {
     setItemForm({
       depot_id: item.depot_id,
       cement_type: item.cement_type,
-      unit: item.unit,
-      sale_price: item.sale_price?.toString() || "",
-      price_wholesale: item.price_wholesale?.toString() || "",
-      price_retail: item.price_retail?.toString() || "",
-      price_end_user: item.price_end_user?.toString() || "",
+      cost_price_ton: item.cost_price_ton?.toString() || "",
+      selling_price_ton: item.selling_price_ton?.toString() || "",
+      cost_price_bag: item.cost_price_bag?.toString() || "",
+      selling_price_bag: item.selling_price_bag?.toString() || "",
     });
     setEditItemOpen(true);
   };
@@ -200,7 +199,7 @@ export default function Products() {
                       <CardTitle className="heading-section">{depot.name}</CardTitle>
                       <Badge variant="outline" className="flex items-center gap-1 w-fit">
                         <MapPin className="w-3 h-3" />
-                        {depot.location || "Unknown"}
+                        {depot.address || "Unknown"}
                       </Badge>
                     </div>
                     <div className="flex gap-2">
@@ -228,19 +227,27 @@ export default function Products() {
                         >
                           <div>
                             <p className="font-medium">{item.cement_type}</p>
-                            <div className="flex gap-2 mt-1">
-                              <Badge variant="secondary" className="text-xs">{item.unit}</Badge>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
-                              <span className="text-muted-foreground">Base Price:</span>
-                              <span className="font-mono font-medium">₦{item.sale_price?.toLocaleString() ?? 0}</span>
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-1 mt-3">
+                              <div className="space-y-1">
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground">Ton Pricing</p>
+                                <div className="grid grid-cols-2 gap-x-4 text-xs">
+                                  <span className="text-muted-foreground">Cost:</span>
+                                  <span className="font-mono font-medium">₦{item.cost_price_ton?.toLocaleString() ?? 0}</span>
+                                  <span className="text-muted-foreground">Selling:</span>
+                                  <span className="font-mono font-medium text-responsive-base font-bold text-primary">₦{item.selling_price_ton?.toLocaleString() ?? 0}</span>
+                                </div>
+                              </div>
 
-                              <span className="text-muted-foreground">Wholesale:</span>
-                              <span className="font-mono font-medium text-blue-600">₦{item.price_wholesale?.toLocaleString() ?? 0}</span>
-
-                              <span className="text-muted-foreground">Retail:</span>
-                              <span className="font-mono font-medium text-green-600">₦{item.price_retail?.toLocaleString() ?? 0}</span>
+                              <div className="space-y-1 border-l pl-4">
+                                <p className="text-[10px] uppercase font-bold text-muted-foreground">Bag Pricing</p>
+                                <div className="grid grid-cols-2 gap-x-4 text-xs">
+                                  <span className="text-muted-foreground">Cost:</span>
+                                  <span className="font-mono font-medium">₦{item.cost_price_bag?.toLocaleString() ?? 0}</span>
+                                  <span className="text-muted-foreground">Selling:</span>
+                                  <span className="font-mono font-medium text-responsive-base font-bold text-primary">₦{item.selling_price_bag?.toLocaleString() ?? 0}</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -283,10 +290,10 @@ export default function Products() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Location</Label>
+              <Label>Location / Address</Label>
               <Input
-                value={depotForm.location}
-                onChange={(e) => setDepotForm({ ...depotForm, location: e.target.value })}
+                value={depotForm.address}
+                onChange={(e) => setDepotForm({ ...depotForm, address: e.target.value })}
                 placeholder="Address or City"
               />
             </div>
@@ -299,11 +306,11 @@ export default function Products() {
 
       {/* Add Product Dialog */}
       <Dialog open={addItemOpen} onOpenChange={setAddItemOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Add Product to Source</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label>Product / Cement Type</Label>
               <Input
@@ -312,28 +319,38 @@ export default function Products() {
                 placeholder="e.g. Dangote 42.5"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Unit</Label>
-              <Select value={itemForm.unit} onValueChange={(v: "tons" | "bags") => setItemForm({ ...itemForm, unit: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tons">Tons</SelectItem>
-                  <SelectItem value="bags">Bags</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Ton Pricing</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Supplier Cost (per Ton)</Label>
+                    <Input type="number" value={itemForm.cost_price_ton} onChange={(e) => setItemForm({ ...itemForm, cost_price_ton: e.target.value })} placeholder="0" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Selling Price (per Ton)</Label>
+                    <Input type="number" value={itemForm.selling_price_ton} onChange={(e) => setItemForm({ ...itemForm, selling_price_ton: e.target.value })} placeholder="0" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Bag Pricing</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Supplier Cost (per Bag)</Label>
+                    <Input type="number" value={itemForm.cost_price_bag} onChange={(e) => setItemForm({ ...itemForm, cost_price_bag: e.target.value })} placeholder="0" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Selling Price (per Bag)</Label>
+                    <Input type="number" value={itemForm.selling_price_bag} onChange={(e) => setItemForm({ ...itemForm, selling_price_bag: e.target.value })} placeholder="0" />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Base Cost Price (from Supplier) (₦)</Label>
-              <Input
-                type="number"
-                value={itemForm.sale_price}
-                onChange={(e) => setItemForm({ ...itemForm, sale_price: e.target.value })}
-                placeholder="0"
-              />
-            </div>
-            <LoadingButton onClick={handleAddProduct} isLoading={addProduct.isPending}>
+
+            <LoadingButton onClick={handleAddProduct} isLoading={addProduct.isPending} className="w-full">
               Add Product
             </LoadingButton>
           </div>
@@ -342,11 +359,11 @@ export default function Products() {
 
       {/* Edit Product Dialog */}
       <Dialog open={editItemOpen} onOpenChange={setEditItemOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Product Pricing</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             <div className="space-y-2">
               <Label>Product / Cement Type</Label>
               <Input
@@ -354,44 +371,38 @@ export default function Products() {
                 onChange={(e) => setItemForm({ ...itemForm, cement_type: e.target.value })}
               />
             </div>
-            <div className="space-y-2">
-              <Label>Base Cost Price (₦)</Label>
-              <Input
-                type="number"
-                value={itemForm.sale_price}
-                onChange={(e) => setItemForm({ ...itemForm, sale_price: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Wholesale (₦)</Label>
-                <Input
-                  type="number"
-                  value={itemForm.price_wholesale}
-                  onChange={(e) => setItemForm({ ...itemForm, price_wholesale: e.target.value })}
-                  placeholder="0"
-                />
+
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Ton Pricing</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Supplier Cost (per Ton)</Label>
+                    <Input type="number" value={itemForm.cost_price_ton} onChange={(e) => setItemForm({ ...itemForm, cost_price_ton: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Selling Price (per Ton)</Label>
+                    <Input type="number" value={itemForm.selling_price_ton} onChange={(e) => setItemForm({ ...itemForm, selling_price_ton: e.target.value })} />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Retail (₦)</Label>
-                <Input
-                  type="number"
-                  value={itemForm.price_retail}
-                  onChange={(e) => setItemForm({ ...itemForm, price_retail: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>End-User (₦)</Label>
-                <Input
-                  type="number"
-                  value={itemForm.price_end_user}
-                  onChange={(e) => setItemForm({ ...itemForm, price_end_user: e.target.value })}
-                  placeholder="0"
-                />
+
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Bag Pricing</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Supplier Cost (per Bag)</Label>
+                    <Input type="number" value={itemForm.cost_price_bag} onChange={(e) => setItemForm({ ...itemForm, cost_price_bag: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Selling Price (per Bag)</Label>
+                    <Input type="number" value={itemForm.selling_price_bag} onChange={(e) => setItemForm({ ...itemForm, selling_price_bag: e.target.value })} />
+                  </div>
+                </div>
               </div>
             </div>
-            <LoadingButton onClick={handleEditProduct} isLoading={updateProduct.isPending}>
+
+            <LoadingButton onClick={handleEditProduct} isLoading={updateProduct.isPending} className="w-full">
               Update Pricing
             </LoadingButton>
           </div>
