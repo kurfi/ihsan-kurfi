@@ -45,7 +45,8 @@ export function DriverWallet({ driverId }: DriverWalletProps) {
         { value: "allowance", label: "Allowance" },
         { value: "bonus", label: "Bonus" },
         { value: "shortage_deduction", label: "Shortage Deduction" },
-        { value: "deposit", label: "Deposit" },
+        { value: "shortage_deduction", label: "Shortage Deduction" },
+        { value: "other", label: "Other" },
     ];
 
     const handleAddTransaction = () => {
@@ -65,7 +66,7 @@ export function DriverWallet({ driverId }: DriverWalletProps) {
     };
 
     const balance = transactions.reduce((acc, t) => {
-        if (t.type === 'deposit' || t.type === 'salary_payment' || t.type === 'bonus' || t.type === 'allowance') {
+        if (t.type === 'deposit' || t.type === 'salary_payment' || t.type === 'bonus' || t.type === 'allowance' || t.type === 'other') {
             return acc + (t.amount || 0);
         } else {
             return acc - (t.amount || 0);
@@ -159,14 +160,14 @@ export function DriverWallet({ driverId }: DriverWalletProps) {
                                         <TableRow key={t.id}>
                                             <TableCell>{format(new Date(t.created_at || new Date()), 'MMM d, yyyy')}</TableCell>
                                             <TableCell className="capitalize">
-                                                <Badge variant={['allowance', 'bonus', 'deposit'].includes(t.type || '') ? 'default' : 'secondary'} className={['allowance', 'bonus', 'deposit'].includes(t.type || '') ? 'bg-success text-success-foreground hover:bg-success/90' : ''}>
+                                                <Badge variant={['allowance', 'bonus', 'deposit', 'other'].includes(t.type || '') ? 'default' : 'secondary'} className={['allowance', 'bonus', 'deposit', 'other'].includes(t.type || '') ? 'bg-success text-success-foreground hover:bg-success/90' : ''}>
                                                     {t.type?.replace('_', ' ')}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="max-w-[200px] truncate">{t.description || '-'}</TableCell>
                                             <TableCell className="text-right font-bold">
-                                                <div className={`flex items-center justify-end gap-1 ${['allowance', 'bonus', 'deposit'].includes(t.type || '') ? 'text-success' : 'text-destructive'}`}>
-                                                    {['allowance', 'bonus', 'deposit'].includes(t.type || '') ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
+                                                <div className={`flex items-center justify-end gap-1 ${['allowance', 'bonus', 'deposit', 'other'].includes(t.type || '') ? 'text-success' : 'text-destructive'}`}>
+                                                    {['allowance', 'bonus', 'deposit', 'other'].includes(t.type || '') ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownLeft className="w-3 h-3" />}
                                                     ₦{t.amount?.toLocaleString()}
                                                 </div>
                                             </TableCell>
