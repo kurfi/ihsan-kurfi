@@ -80,12 +80,17 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
             let salePrice = 0;
             let costPrice = 0;
 
+            // Always use bag price as the base
+            const baseCostPrice = matchingProduct.cost_price_bag || 0;
+            const baseSalePrice = matchingProduct.selling_price_bag || baseCostPrice;
+
             if (form.unit === "tons") {
-                costPrice = matchingProduct.cost_price_ton || 0;
-                salePrice = matchingProduct.selling_price_ton || costPrice;
+                // 1 Ton = 20 Bags
+                costPrice = baseCostPrice * 20;
+                salePrice = baseSalePrice * 20;
             } else {
-                costPrice = matchingProduct.cost_price_bag || 0;
-                salePrice = matchingProduct.selling_price_bag || costPrice;
+                costPrice = baseCostPrice;
+                salePrice = baseSalePrice;
             }
 
             setAutomatedPricing({
@@ -298,7 +303,7 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
 
                     <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-lg border border-primary/10">
                         <div className="space-y-1">
-                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Estimated Cost</Label>
+                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Cost Price</Label>
                             <p className="font-mono text-sm font-semibold">₦{automatedPricing.purchase_price.toLocaleString()}</p>
                         </div>
                         <div className="space-y-1">

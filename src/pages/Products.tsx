@@ -326,12 +326,12 @@ export default function Products() {
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Ton Pricing</h3>
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <Label className="text-xs">Supplier Cost (per Ton)</Label>
-                    <Input type="number" value={itemForm.cost_price_ton} onChange={(e) => setItemForm({ ...itemForm, cost_price_ton: e.target.value })} placeholder="0" />
+                    <Label className="text-xs">Supplier Cost (per Ton) - Auto Calculated</Label>
+                    <Input type="number" value={itemForm.cost_price_ton} readOnly className="bg-muted" placeholder="0" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs">Selling Price (per Ton)</Label>
-                    <Input type="number" value={itemForm.selling_price_ton} onChange={(e) => setItemForm({ ...itemForm, selling_price_ton: e.target.value })} placeholder="0" />
+                    <Label className="text-xs">Selling Price (per Ton) - Auto Calculated</Label>
+                    <Input type="number" value={itemForm.selling_price_ton} readOnly className="bg-muted" placeholder="0" />
                   </div>
                 </div>
               </div>
@@ -341,11 +341,29 @@ export default function Products() {
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <Label className="text-xs">Supplier Cost (per Bag)</Label>
-                    <Input type="number" value={itemForm.cost_price_bag} onChange={(e) => setItemForm({ ...itemForm, cost_price_bag: e.target.value })} placeholder="0" />
+                    <Input
+                      type="number"
+                      value={itemForm.cost_price_bag}
+                      onChange={(e) => {
+                        const bagPrice = e.target.value;
+                        const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
+                        setItemForm({ ...itemForm, cost_price_bag: bagPrice, cost_price_ton: tonPrice });
+                      }}
+                      placeholder="0"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs">Selling Price (per Bag)</Label>
-                    <Input type="number" value={itemForm.selling_price_bag} onChange={(e) => setItemForm({ ...itemForm, selling_price_bag: e.target.value })} placeholder="0" />
+                    <Input
+                      type="number"
+                      value={itemForm.selling_price_bag}
+                      onChange={(e) => {
+                        const bagPrice = e.target.value;
+                        const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
+                        setItemForm({ ...itemForm, selling_price_bag: bagPrice, selling_price_ton: tonPrice });
+                      }}
+                      placeholder="0"
+                    />
                   </div>
                 </div>
               </div>
@@ -379,12 +397,12 @@ export default function Products() {
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Ton Pricing</h3>
                 <div className="space-y-3">
                   <div className="space-y-2">
-                    <Label className="text-xs">Supplier Cost (per Ton)</Label>
-                    <Input type="number" value={itemForm.cost_price_ton} onChange={(e) => setItemForm({ ...itemForm, cost_price_ton: e.target.value })} />
+                    <Label className="text-xs">Supplier Cost (per Ton) - Auto Calculated</Label>
+                    <Input type="number" value={itemForm.cost_price_ton} readOnly className="bg-muted" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs">Selling Price (per Ton)</Label>
-                    <Input type="number" value={itemForm.selling_price_ton} onChange={(e) => setItemForm({ ...itemForm, selling_price_ton: e.target.value })} />
+                    <Label className="text-xs">Selling Price (per Ton) - Auto Calculated</Label>
+                    <Input type="number" value={itemForm.selling_price_ton} readOnly className="bg-muted" />
                   </div>
                 </div>
               </div>
@@ -394,11 +412,29 @@ export default function Products() {
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <Label className="text-xs">Supplier Cost (per Bag)</Label>
-                    <Input type="number" value={itemForm.cost_price_bag} onChange={(e) => setItemForm({ ...itemForm, cost_price_bag: e.target.value })} />
+                    <Input
+                      type="number"
+                      value={itemForm.cost_price_bag}
+                      onChange={(e) => {
+                        const bagPrice = e.target.value;
+                        const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
+                        setItemForm({ ...itemForm, cost_price_bag: bagPrice, cost_price_ton: tonPrice });
+                      }}
+                      placeholder="0"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs">Selling Price (per Bag)</Label>
-                    <Input type="number" value={itemForm.selling_price_bag} onChange={(e) => setItemForm({ ...itemForm, selling_price_bag: e.target.value })} />
+                    <Input
+                      type="number"
+                      value={itemForm.selling_price_bag}
+                      onChange={(e) => {
+                        const bagPrice = e.target.value;
+                        const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
+                        setItemForm({ ...itemForm, selling_price_bag: bagPrice, selling_price_ton: tonPrice });
+                      }}
+                      placeholder="0"
+                    />
                   </div>
                 </div>
               </div>
