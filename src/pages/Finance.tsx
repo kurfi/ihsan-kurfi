@@ -47,7 +47,7 @@ export default function Finance() {
   const { data: payments = [], isLoading: loadingPayments } = usePayments();
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
   const { data: customers = [] } = useCustomers();
-  const { data: orders = [] } = useOrders();
+  const { data: orders = [], isLoading: loadingOrders } = useOrders(expenseDialogOpen);
   const { data: paymentAccounts = [], isLoading: loadingAccounts } = usePaymentAccounts();
 
   const addPayment = useAddPayment();
@@ -65,6 +65,8 @@ export default function Finance() {
   const [editPaymentDialogOpen, setEditPaymentDialogOpen] = useState(false);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
+  // Orders are loaded lazily — only when the expense dialog is opened
+  // This avoids fetching all orders (with 5 joins) on every Finance page load
   const [editExpenseDialogOpen, setEditExpenseDialogOpen] = useState(false);
   const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);

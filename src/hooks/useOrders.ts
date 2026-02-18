@@ -57,10 +57,12 @@ export interface Order {
   purchases?: Array<{ atc_number: string | null; cap_number: string | null }> | null;
 }
 
-export function useOrders() {
+export function useOrders(enabled = true) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!enabled) return;
+
     const channel = supabase
       .channel("orders-changes")
       .on(
@@ -79,10 +81,11 @@ export function useOrders() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, enabled]);
 
   return useQuery({
     queryKey: ["orders"],
+    enabled,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")

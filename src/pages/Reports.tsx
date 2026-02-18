@@ -33,22 +33,32 @@ import { PendingDeliveryCard } from '@/components/reports/PendingDeliveryCard';
 import { CustomerAgingCard } from '@/components/reports/CustomerAgingCard';
 
 export default function Reports() {
-    const { data: expiringDocs = [], isLoading: docsLoading } = useExpiringDocuments();
+    // Track which top-level tab is active to avoid firing all queries at once
+    const [activeTab, setActiveTab] = useState('compliance');
+    // Financial sub-tab state
+    const [financeSubTab, setFinanceSubTab] = useState('overview');
 
-    const { data: customerAging = [], isLoading: agingLoading } = useCustomerAging();
-    const { data: fleetStatus = [], isLoading: fleetLoading } = useFleetAvailability();
-    const { data: salesSummary, isLoading: salesLoading } = useSalesSummary();
-    const { data: pendingDeliveries = [], isLoading: deliveriesLoading } = usePendingDeliveries();
-    const { data: cashPosition, isLoading: cashLoading } = useDailyCashPosition();
+    // Compliance tab queries — only run when compliance tab is active
+    const isComplianceTab = activeTab === 'compliance';
+    const { data: expiringDocs = [], isLoading: docsLoading } = useExpiringDocuments(isComplianceTab);
+    const { data: fleetStatus = [], isLoading: fleetLoading } = useFleetAvailability(isComplianceTab);
     const { data: drivers = [] } = useDrivers();
     const { data: documents = [] } = useDocuments();
 
-    // Financial Reports hooks
-    const { data: monthlyPL = [], isLoading: loadingPL } = useMonthlyProfitLoss();
-    const { data: receivables = [], isLoading: loadingReceivables } = useReceivablesAging();
-    const { data: tripProfit = [], isLoading: loadingTrips } = useTripProfitabilityDetailed();
-    const { data: directDrops = [], isLoading: loadingDirectDrops } = useDirectDeliveries();
-    const { data: dualStreamData = [] } = useDualStreamProfitability();
+    // Sales tab queries — only run when sales tab is active
+    const isSalesTab = activeTab === 'sales';
+    const { data: salesSummary, isLoading: salesLoading } = useSalesSummary(undefined, undefined, isSalesTab);
+    const { data: pendingDeliveries = [], isLoading: deliveriesLoading } = usePendingDeliveries(isSalesTab);
+
+    // Finance tab queries — only run when finance tab is active
+    const isFinanceTab = activeTab === 'finance';
+    const { data: customerAging = [], isLoading: agingLoading } = useCustomerAging(isFinanceTab);
+    const { data: cashPosition, isLoading: cashLoading } = useDailyCashPosition(undefined, isFinanceTab);
+    const { data: monthlyPL = [], isLoading: loadingPL } = useMonthlyProfitLoss(undefined, undefined, isFinanceTab);
+    const { data: receivables = [], isLoading: loadingReceivables } = useReceivablesAging(isFinanceTab);
+    const { data: tripProfit = [], isLoading: loadingTrips } = useTripProfitabilityDetailed(isFinanceTab);
+    const { data: directDrops = [], isLoading: loadingDirectDrops } = useDirectDeliveries(isFinanceTab);
+    const { data: dualStreamData = [] } = useDualStreamProfitability(isFinanceTab);
 
     const currentMonth = monthlyPL[0];
     const totalReceivables = receivables.reduce((sum, r) => sum + r.total_owed, 0);
@@ -58,9 +68,6 @@ export default function Reports() {
     const haulageProfit = dualStreamData.reduce((sum, record) => sum + (record.haulage_profit || 0), 0);
     const tradingRevenue = dualStreamData.reduce((sum, record) => sum + (record.trading_revenue || 0), 0);
     const tradingProfit = dualStreamData.reduce((sum, record) => sum + (record.trading_profit || 0), 0);
-
-    // Financial sub-tab state
-    const [financeSubTab, setFinanceSubTab] = useState('overview');
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const exportToExcel = (data: Record<string, any>[], filename: string) => {
@@ -81,7 +88,7 @@ export default function Reports() {
     return (
         <MainLayout title="Reports & Analytics">
             <div className="mobile-spacing">
-                <Tabs defaultValue="compliance" className="w-full">
+                <Tabs defaultValue="compliance" className="w-full" onValueChange={setActiveTab}>
                     <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-10">
                         <TabsTrigger value="compliance" className="text-xs sm:text-sm">Fleet & Compliance</TabsTrigger>
                         <TabsTrigger value="sales" className="text-xs sm:text-sm">Sales & Loading</TabsTrigger>

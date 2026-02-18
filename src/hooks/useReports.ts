@@ -33,9 +33,10 @@ export type PendingOrder = Tables<'orders'> & {
 };
 
 // Expiring Documents Report
-export function useExpiringDocuments() {
+export function useExpiringDocuments(enabled = true) {
     return useQuery({
         queryKey: ['expiring-documents'],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('expiring_documents')
@@ -65,9 +66,10 @@ export function useTripProfitability() {
 }
 
 // Dual Stream Profitability Report
-export function useDualStreamProfitability() {
+export function useDualStreamProfitability(enabled = true) {
     return useQuery({
         queryKey: ['dual-stream-profitability'],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('dual_stream_profitability')
@@ -81,9 +83,10 @@ export function useDualStreamProfitability() {
 }
 
 // Customer Aging Analysis
-export function useCustomerAging() {
+export function useCustomerAging(enabled = true) {
     return useQuery({
         queryKey: ['customer-aging'],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('customer_aging')
@@ -97,9 +100,10 @@ export function useCustomerAging() {
 }
 
 // Fleet Availability Report
-export function useFleetAvailability() {
+export function useFleetAvailability(enabled = true) {
     return useQuery({
         queryKey: ['fleet-availability'],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('fleet_availability')
@@ -113,9 +117,10 @@ export function useFleetAvailability() {
 }
 
 // Sales Summary by Period
-export function useSalesSummary(startDate?: Date, endDate?: Date) {
+export function useSalesSummary(startDate?: Date, endDate?: Date, enabled = true) {
     return useQuery({
         queryKey: ['sales-summary', startDate, endDate],
+        enabled,
         queryFn: async () => {
             let query = supabase
                 .from('orders')
@@ -164,9 +169,10 @@ export function useSalesSummary(startDate?: Date, endDate?: Date) {
 }
 
 // Pending Deliveries
-export function usePendingDeliveries() {
+export function usePendingDeliveries(enabled = true) {
     return useQuery({
         queryKey: ['pending-deliveries'],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('orders')
@@ -180,19 +186,20 @@ export function usePendingDeliveries() {
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
-            return (data || []) as PendingOrder[];
+            return (data || []) as unknown as PendingOrder[];
         },
     });
 }
 
 // Daily Cash Position
-export function useDailyCashPosition(date?: Date) {
+export function useDailyCashPosition(date?: Date, enabled = true) {
     const targetDate = date || new Date();
     const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
     const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
 
     return useQuery({
         queryKey: ['daily-cash-position', startOfDay.toISOString()],
+        enabled,
         queryFn: async () => {
             // Get payments for the day
             const { data: payments, error: paymentsError } = await supabase
@@ -235,9 +242,10 @@ export function useDailyCashPosition(date?: Date) {
 }
 
 // Direct Deliveries Report
-export function useDirectDeliveries() {
+export function useDirectDeliveries(enabled = true) {
     return useQuery({
         queryKey: ['direct-deliveries'],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('orders')

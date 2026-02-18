@@ -50,9 +50,10 @@ export interface TripProfitability {
     payment_terms: string | null;
 }
 
-export function useMonthlyProfitLoss(startDate?: string, endDate?: string) {
+export function useMonthlyProfitLoss(startDate?: string, endDate?: string, enabled = true) {
     return useQuery({
         queryKey: ["monthly-pl", startDate, endDate],
+        enabled,
         queryFn: async () => {
             let query = supabase
                 .from("monthly_profit_loss" as any)
@@ -73,9 +74,10 @@ export function useMonthlyProfitLoss(startDate?: string, endDate?: string) {
     });
 }
 
-export function useReceivablesAging() {
+export function useReceivablesAging(enabled = true) {
     return useQuery({
         queryKey: ["receivables-aging"],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from("receivables_aging" as any)
@@ -88,9 +90,10 @@ export function useReceivablesAging() {
     });
 }
 
-export function useTripProfitabilityDetailed() {
+export function useTripProfitabilityDetailed(enabled = true) {
     return useQuery({
         queryKey: ["trip-profitability-detailed"],
+        enabled,
         queryFn: async () => {
             const { data, error } = await supabase
                 .from("trip_profitability_detailed" as any)
