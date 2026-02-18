@@ -109,11 +109,35 @@ export function useDeleteDepot() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // Nullify depot_id on orders referencing this depot
+      const { error: ordersError } = await supabase
+        .from("orders")
+        .update({ depot_id: null } as any)
+        .eq("depot_id", id);
+      if (ordersError) throw ordersError;
+
+      // Nullify destination_depot_id on purchases referencing this depot
+      const { error: purchasesError } = await supabase
+        .from("purchases")
+        .update({ destination_depot_id: null } as any)
+        .eq("destination_depot_id", id);
+      if (purchasesError) throw purchasesError;
+
+      // Delete inventory items belonging to this depot
+      const { error: inventoryError } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("depot_id", id);
+      if (inventoryError) throw inventoryError;
+
+      // Now delete the depot
       const { error } = await supabase.from("depots").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["depots"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["purchases"] });
       toast({ title: "Depot deleted successfully" });
     },
     onError: (error) => {
