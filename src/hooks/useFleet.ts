@@ -86,14 +86,12 @@ export function useAddTruck() {
 
   return useMutation({
     mutationFn: async (truck: Partial<Omit<Truck, "id" | "created_at">> & { plate_number: string }) => {
-      const { plate_number, ...rest } = truck;
       const { data, error } = await supabase
         .from("trucks")
         .insert({
-          ...rest,
-          number_plate: plate_number,
+          ...truck,
           truck_type: truck.truck_type || "Other"
-        } as any)
+        })
         .select()
         .single();
       if (error) throw error;
@@ -115,13 +113,9 @@ export function useUpdateTruck() {
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Truck> & { id: string }) => {
-      const { plate_number, ...rest } = updates;
-      const updatePayload: any = { ...rest };
-      if (plate_number) updatePayload.number_plate = plate_number;
-
       const { data, error } = await supabase
         .from("trucks")
-        .update(updatePayload)
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
@@ -146,7 +140,7 @@ export function useAddDriver() {
     mutationFn: async (driver: Partial<Omit<Driver, "id" | "created_at">> & { name: string }) => {
       const { data, error } = await supabase
         .from("drivers")
-        .insert(driver as any)
+        .insert(driver)
         .select()
         .single();
       if (error) throw error;
@@ -170,7 +164,7 @@ export function useUpdateDriver() {
     mutationFn: async ({ id, ...updates }: Partial<Driver> & { id: string }) => {
       const { data, error } = await supabase
         .from("drivers")
-        .update(updates as any)
+        .update(updates)
         .eq("id", id)
         .select()
         .single();
@@ -195,7 +189,7 @@ export function useDeleteTruck() {
     mutationFn: async (id: string) => {
       const { data, error } = await supabase
         .from("trucks")
-        .update({ status: "Inactive" } as any)
+        .update({ is_active: false })
         .eq("id", id)
         .select()
         .single();
@@ -220,7 +214,7 @@ export function useDeleteDriver() {
     mutationFn: async (id: string) => {
       const { data, error } = await supabase
         .from("drivers")
-        .update({ status: "Inactive" } as any)
+        .update({ is_active: false })
         .eq("id", id)
         .select()
         .single();
@@ -266,7 +260,7 @@ export function useAddDriverTransaction() {
     mutationFn: async (transaction: Partial<Omit<DriverTransaction, "id" | "created_at">>) => {
       const { data, error } = await supabase
         .from("driver_transactions")
-        .insert(transaction as any)
+        .insert(transaction as any) // Keep any here for now as transaction_type enum might still have issues in types.ts
         .select()
         .single();
       if (error) throw error;

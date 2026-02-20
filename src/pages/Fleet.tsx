@@ -751,7 +751,7 @@ export default function Fleet() {
                         <h3 className="body-small font-semibold uppercase tracking-wide">Next of Kin</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Name</Label>
+                            <Label>Name *</Label>
                             <Input
                               value={driverForm.next_of_kin}
                               onChange={(e) => setDriverForm({ ...driverForm, next_of_kin: e.target.value })}
@@ -759,7 +759,7 @@ export default function Fleet() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>Phone</Label>
+                            <Label>Phone *</Label>
                             <Input
                               value={driverForm.next_of_kin_phone}
                               onChange={(e) => setDriverForm({ ...driverForm, next_of_kin_phone: e.target.value })}
@@ -774,7 +774,7 @@ export default function Fleet() {
                         <h3 className="body-small font-semibold uppercase tracking-wide">Guarantor</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label>Name</Label>
+                            <Label>Name *</Label>
                             <Input
                               value={driverForm.guarantor_name}
                               onChange={(e) => setDriverForm({ ...driverForm, guarantor_name: e.target.value })}
@@ -782,7 +782,7 @@ export default function Fleet() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>Phone</Label>
+                            <Label>Phone *</Label>
                             <Input
                               value={driverForm.guarantor_phone}
                               onChange={(e) => setDriverForm({ ...driverForm, guarantor_phone: e.target.value })}
@@ -790,7 +790,7 @@ export default function Fleet() {
                             />
                           </div>
                           <div className="space-y-2 sm:col-span-2">
-                            <Label>Address</Label>
+                            <Label>Address *</Label>
                             <Textarea
                               value={driverForm.guarantor_address}
                               onChange={(e) => setDriverForm({ ...driverForm, guarantor_address: e.target.value })}
@@ -803,7 +803,14 @@ export default function Fleet() {
                       <LoadingButton
                         onClick={handleAddDriver}
                         className="w-full"
-                        disabled={!driverForm.name}
+                        disabled={
+                          !driverForm.name ||
+                          !driverForm.next_of_kin ||
+                          !driverForm.next_of_kin_phone ||
+                          !driverForm.guarantor_name ||
+                          !driverForm.guarantor_phone ||
+                          !driverForm.guarantor_address
+                        }
                         isLoading={addDriver.isPending}
                       >
                         Add Driver
@@ -1496,7 +1503,7 @@ export default function Fleet() {
                 <h3 className="body-small font-semibold uppercase tracking-wide">Next of Kin</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Name</Label>
+                    <Label>Name *</Label>
                     <Input
                       value={driverForm.next_of_kin}
                       onChange={(e) => setDriverForm({ ...driverForm, next_of_kin: e.target.value })}
@@ -1504,7 +1511,7 @@ export default function Fleet() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Phone</Label>
+                    <Label>Phone *</Label>
                     <Input
                       value={driverForm.next_of_kin_phone}
                       onChange={(e) => setDriverForm({ ...driverForm, next_of_kin_phone: e.target.value })}
@@ -1517,7 +1524,7 @@ export default function Fleet() {
                 <h3 className="body-small font-semibold uppercase tracking-wide">Guarantor</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Name</Label>
+                    <Label>Name *</Label>
                     <Input
                       value={driverForm.guarantor_name}
                       onChange={(e) => setDriverForm({ ...driverForm, guarantor_name: e.target.value })}
@@ -1525,7 +1532,7 @@ export default function Fleet() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Phone</Label>
+                    <Label>Phone *</Label>
                     <Input
                       value={driverForm.guarantor_phone}
                       onChange={(e) => setDriverForm({ ...driverForm, guarantor_phone: e.target.value })}
@@ -1533,7 +1540,7 @@ export default function Fleet() {
                     />
                   </div>
                   <div className="space-y-2 sm:col-span-2">
-                    <Label>Address</Label>
+                    <Label>Address *</Label>
                     <Textarea
                       value={driverForm.guarantor_address}
                       onChange={(e) => setDriverForm({ ...driverForm, guarantor_address: e.target.value })}
@@ -1545,7 +1552,14 @@ export default function Fleet() {
               <LoadingButton
                 onClick={handleEditDriver}
                 className="w-full"
-                disabled={!driverForm.name}
+                disabled={
+                  !driverForm.name ||
+                  !driverForm.next_of_kin ||
+                  !driverForm.next_of_kin_phone ||
+                  !driverForm.guarantor_name ||
+                  !driverForm.guarantor_phone ||
+                  !driverForm.guarantor_address
+                }
                 isLoading={updateDriver.isPending}
               >
                 Save Changes

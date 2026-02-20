@@ -194,33 +194,66 @@ export type Database = {
       }
       drivers: {
         Row: {
-          active: boolean | null
+          accident_count: number | null
+          address: string | null
           created_at: string | null
+          email: string | null
+          guarantor_address: string | null
+          guarantor_name: string | null
+          guarantor_phone: string | null
           id: string
           is_active: boolean | null
+          license_class: string | null
           license_number: string | null
           name: string
+          next_of_kin: string | null
+          next_of_kin_phone: string | null
           phone: string | null
+          standard_allowance: number | null
+          successful_deliveries: number | null
+          total_deliveries: number | null
           wallet_balance: number | null
         }
         Insert: {
-          active?: boolean | null
+          accident_count?: number | null
+          address?: string | null
           created_at?: string | null
+          email?: string | null
+          guarantor_address?: string | null
+          guarantor_name?: string | null
+          guarantor_phone?: string | null
           id?: string
           is_active?: boolean | null
+          license_class?: string | null
           license_number?: string | null
           name: string
+          next_of_kin?: string | null
+          next_of_kin_phone?: string | null
           phone?: string | null
+          standard_allowance?: number | null
+          successful_deliveries?: number | null
+          total_deliveries?: number | null
           wallet_balance?: number | null
         }
         Update: {
-          active?: boolean | null
+          accident_count?: number | null
+          address?: string | null
           created_at?: string | null
+          email?: string | null
+          guarantor_address?: string | null
+          guarantor_name?: string | null
+          guarantor_phone?: string | null
           id?: string
           is_active?: boolean | null
+          license_class?: string | null
           license_number?: string | null
           name?: string
+          next_of_kin?: string | null
+          next_of_kin_phone?: string | null
           phone?: string | null
+          standard_allowance?: number | null
+          successful_deliveries?: number | null
+          total_deliveries?: number | null
           wallet_balance?: number | null
         }
         Relationships: []
@@ -905,28 +938,55 @@ export type Database = {
       }
       trucks: {
         Row: {
+          capacity_tons: number | null
+          chassis_number: string | null
           created_at: string | null
+          current_mileage: number | null
+          default_fuel_cost: number | null
           driver_id: string | null
           id: string
-          number_plate: string
+          is_active: boolean | null
+          last_service_date: string | null
+          model: string | null
+          next_service_date: string | null
+          plate_number: string
+          service_interval_km: number | null
           status: string | null
-          truck_type: string
+          truck_type: string | null
         }
         Insert: {
+          capacity_tons?: number | null
+          chassis_number?: string | null
           created_at?: string | null
+          current_mileage?: number | null
+          default_fuel_cost?: number | null
           driver_id?: string | null
           id?: string
-          number_plate: string
+          is_active?: boolean | null
+          last_service_date?: string | null
+          model?: string | null
+          next_service_date?: string | null
+          plate_number: string
+          service_interval_km?: number | null
           status?: string | null
-          truck_type: string
+          truck_type?: string | null
         }
         Update: {
+          capacity_tons?: number | null
+          chassis_number?: string | null
           created_at?: string | null
+          current_mileage?: number | null
+          default_fuel_cost?: number | null
           driver_id?: string | null
           id?: string
-          number_plate?: string
+          is_active?: boolean | null
+          last_service_date?: string | null
+          model?: string | null
+          next_service_date?: string | null
+          plate_number?: string
+          service_interval_km?: number | null
           status?: string | null
-          truck_type?: string
+          truck_type?: string | null
         }
         Relationships: [
           {

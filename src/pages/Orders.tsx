@@ -245,6 +245,8 @@ export default function Orders() {
     const fuelCost = selectedTruck?.default_fuel_cost || 0;
     const allowance = selectedDriver?.standard_allowance || 0;
 
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
     updateStatus.mutate({
       id: selectedOrder,
       status: "dispatched",
