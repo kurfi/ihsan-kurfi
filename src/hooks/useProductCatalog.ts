@@ -146,6 +146,31 @@ export function useDeleteDepot() {
   });
 }
 
+export function useUpdateDepot() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; address?: string }) => {
+      const { data, error } = await supabase
+        .from("depots")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["depots"] });
+      toast({ title: "Source updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Failed to update source", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
 export function useAddInventory() {
   const queryClient = useQueryClient();
   const { toast } = useToast();

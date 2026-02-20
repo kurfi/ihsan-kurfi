@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useProducts, useDepots, useAddDepot, useDeleteDepot, useAddInventory, useUpdateInventoryItem, useDeleteInventory } from "@/hooks/useProductCatalog";
+import { useProducts, useDepots, useAddDepot, useUpdateDepot, useDeleteDepot, useAddInventory, useUpdateInventoryItem, useDeleteInventory } from "@/hooks/useProductCatalog";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -19,6 +19,7 @@ export default function Products() {
   const { data: products = [], isLoading } = useProducts();
   const { data: depots = [] } = useDepots();
   const addDepot = useAddDepot();
+  const updateDepot = useUpdateDepot();
   const deleteDepot = useDeleteDepot();
   const addProduct = useAddInventory();
   const updateProduct = useUpdateInventoryItem();
@@ -36,6 +37,8 @@ export default function Products() {
   });
 
   const [addDepotOpen, setAddDepotOpen] = useState(false);
+  const [editDepotOpen, setEditDepotOpen] = useState(false);
+  const [editingDepotId, setEditingDepotId] = useState<string | null>(null);
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -45,6 +48,20 @@ export default function Products() {
     addDepot.mutate(depotForm, {
       onSuccess: () => {
         setAddDepotOpen(false);
+        setDepotForm({ name: "", address: "" });
+      }
+    });
+  };
+
+  const handleEditDepot = () => {
+    if (!editingDepotId) return;
+    updateDepot.mutate({
+      id: editingDepotId,
+      ...depotForm
+    }, {
+      onSuccess: () => {
+        setEditDepotOpen(false);
+        setEditingDepotId(null);
         setDepotForm({ name: "", address: "" });
       }
     });
@@ -103,6 +120,12 @@ export default function Products() {
   const handleOpenAddItem = (depotId: string) => {
     setItemForm({ ...itemForm, depot_id: depotId });
     setAddItemOpen(true);
+  };
+
+  const handleOpenEditDepot = (depot: typeof depots[0]) => {
+    setEditingDepotId(depot.id);
+    setDepotForm({ name: depot.name, address: depot.address || "" });
+    setEditDepotOpen(true);
   };
 
   const handleOpenEditItem = (item: typeof products[0]) => {
@@ -203,6 +226,9 @@ export default function Products() {
                       </Badge>
                     </div>
                     <div className="flex gap-2">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleOpenEditDepot(depot)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleOpenAddItem(depot.id)}>
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -297,8 +323,37 @@ export default function Products() {
                 placeholder="Address or City"
               />
             </div>
-            <LoadingButton onClick={handleAddDepot} isLoading={addDepot.isPending}>
+            <LoadingButton onClick={handleAddDepot} isLoading={addDepot.isPending} className="w-full">
               Add Source
+            </LoadingButton>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Source Dialog */}
+      <Dialog open={editDepotOpen} onOpenChange={setEditDepotOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Source Location</DialogTitle>
+            <DialogDescription>Update the name and location of this plant or depot.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Source Name</Label>
+              <Input
+                value={depotForm.name}
+                onChange={(e) => setDepotForm({ ...depotForm, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Location / Address</Label>
+              <Input
+                value={depotForm.address}
+                onChange={(e) => setDepotForm({ ...depotForm, address: e.target.value })}
+              />
+            </div>
+            <LoadingButton onClick={handleEditDepot} isLoading={updateDepot.isPending} className="w-full">
+              Save Changes
             </LoadingButton>
           </div>
         </DialogContent>
