@@ -396,7 +396,6 @@ export default function Orders() {
                     <TableRow>
                       <TableHead>Order # / Waybill</TableHead>
                       <TableHead>Customer</TableHead>
-                      <TableHead>Type</TableHead>
                       <TableHead>Qty</TableHead>
                       <TableHead>Logistics (₦)</TableHead>
                       <TableHead>Status</TableHead>
@@ -412,11 +411,6 @@ export default function Orders() {
                           <div className="text-[10px] text-muted-foreground">{order.waybill_number || "No Waybill"}</div>
                         </TableCell>
                         <TableCell>{order.customer?.name}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={order.order_type === "plant_direct" ? "border-blue-500 text-blue-600" : "border-green-500 text-green-600"}>
-                            {order.order_type === "plant_direct" ? "🟦 Plant" : "🟩 Depot"}
-                          </Badge>
-                        </TableCell>
                         <TableCell>{order.quantity} {order.unit === 'tons' ? 'T' : 'B'}</TableCell>
                         <TableCell>
                           <div className="text-[10px] space-y-0.5">

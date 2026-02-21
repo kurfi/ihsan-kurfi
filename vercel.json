@@ -2,7 +2,7 @@
     "cleanUrls": true,
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/((?!api/|assets/|_next/|static/|ihsan-icon.png|ihsan-icon.ico|placeholder.svg|robots.txt).*)",
             "destination": "/index.html"
         }
     ]

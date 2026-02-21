@@ -42,9 +42,8 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
 
     const [form, setForm] = useState({
         customer_id: "",
-        order_type: "depot_dispatch" as OrderType,
-        depot_id: "",
-        supplier_id: "",
+        order_type: "depot_dispatch" as OrderType, // Hardcoded, hidden from UI
+        depot_id: "", // Renamed to Product Source in UI
         cement_type: "Portland Cement",
         quantity: "",
         unit: "bags" as "tons" | "bags",
@@ -64,13 +63,10 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
 
     // Automatically update pricing when relevant fields change
     useEffect(() => {
-        const selectedDepotId = form.order_type === "depot_dispatch" ? form.depot_id : undefined;
-        // In this system, even for plant direct, we might have a 'Depot' record representing the Plant in the inventory table
-        // Or we match by supplier if applicable. Let's assume for now prices are linked to Depots/Sources.
+        const selectedSourceId = form.depot_id;
 
         const matchingProduct = products.find(p =>
-            p.cement_type === form.cement_type &&
-            (selectedDepotId ? p.depot_id === selectedDepotId : true)
+            p.cement_type === form.cement_type && p.depot_id === selectedSourceId
         );
 
         const customer = customers.find(c => c.id === form.customer_id);
@@ -100,14 +96,13 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         } else {
             setAutomatedPricing({ purchase_price: 0, sale_price: 0 });
         }
-    }, [form.customer_id, form.depot_id, form.cement_type, form.order_type, products, customers]);
+    }, [form.customer_id, form.depot_id, form.cement_type, products, customers]);
 
     const resetForm = () => {
         setForm({
             customer_id: "",
             order_type: "depot_dispatch",
             depot_id: "",
-            supplier_id: "",
             cement_type: "Portland Cement",
             quantity: "",
             unit: "bags",
@@ -136,9 +131,8 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         createOrder.mutate(
             {
                 customer_id: form.customer_id,
-                order_type: form.order_type,
-                depot_id: form.order_type === "depot_dispatch" ? form.depot_id : undefined,
-                supplier_id: form.order_type === "plant_direct" ? form.supplier_id : undefined,
+                order_type: form.order_type, // Hardcoded to depot_dispatch
+                depot_id: form.depot_id,
                 cement_type: form.cement_type,
                 quantity: qty,
                 unit: form.unit,
@@ -161,6 +155,11 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
             }
         );
     };
+
+    // Get distinct cement types available for the selected source
+    const availableProducts = form.depot_id
+        ? Array.from(new Set(products.filter(p => p.depot_id === form.depot_id).map(p => p.cement_type)))
+        : [];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,60 +192,36 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Order Type *</Label>
-                        <Select value={form.order_type} onValueChange={(v: OrderType) => setForm({ ...form, order_type: v, depot_id: "", supplier_id: "" })}>
+                        <Label>Product Source *</Label>
+                        <Select value={form.depot_id} onValueChange={(v) => {
+                            setForm({ ...form, depot_id: v, cement_type: "" }); // Reset cement type when source changes
+                        }}>
                             <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue placeholder="Select Product Source" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="plant_direct">Plant Direct</SelectItem>
-                                <SelectItem value="depot_dispatch">Depot Dispatch</SelectItem>
+                                {depots.map((d) => (
+                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
 
-                    {form.order_type === "plant_direct" && (
-                        <div className="space-y-2">
-                            <Label>Manufacturer (Supplier)</Label>
-                            <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select manufacturer" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {suppliers.map((s) => (
-                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
-                    {form.order_type === "depot_dispatch" && (
-                        <div className="space-y-2">
-                            <Label>Depot *</Label>
-                            <Select value={form.depot_id} onValueChange={(v) => setForm({ ...form, depot_id: v })}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select depot" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {depots.map((d) => (
-                                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Cement Type *</Label>
-                            <Select value={form.cement_type} onValueChange={(v) => setForm({ ...form, cement_type: v })}>
+                            <Select
+                                value={form.cement_type}
+                                onValueChange={(v) => setForm({ ...form, cement_type: v })}
+                                disabled={!form.depot_id || availableProducts.length === 0}
+                            >
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue placeholder={!form.depot_id ? "Select a source first" : "Select product"} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="Portland Cement">Portland Cement</SelectItem>
-                                    <SelectItem value="White Cement">White Cement</SelectItem>
+                                    {availableProducts.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>

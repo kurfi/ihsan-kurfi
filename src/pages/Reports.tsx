@@ -315,48 +315,7 @@ export default function Reports() {
                     {/* Sales & Loading Reports */}
                     <TabsContent value="sales" className="space-y-4">
                         {/* Sales Summary */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="heading-section flex items-center gap-2">
-                                        <Package className="h-5 w-5 text-blue-500" />
-                                        Plant Loading
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-responsive-2xl font-bold">
-                                        {salesSummary?.plantDirect.totalTons.toFixed(1) || 0} Tons
-                                        {salesSummary?.plantDirect.totalBags ? <span className="text-sm ml-2"> + {salesSummary.plantDirect.totalBags} Bags</span> : ''}
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        ₦{(salesSummary?.plantDirect.totalRevenue || 0).toLocaleString()}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        {salesSummary?.plantDirect.orders.length || 0} orders
-                                    </p>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="heading-section flex items-center gap-2">
-                                        <Package className="h-5 w-5 text-green-500" />
-                                        Depot Sales
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-responsive-2xl font-bold">
-                                        {salesSummary?.depot.totalTons.toFixed(1) || 0} Tons
-                                        {salesSummary?.depot.totalBags ? <span className="text-sm ml-2"> + {salesSummary.depot.totalBags} Bags</span> : ''}
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mt-1">
-                                        ₦{(salesSummary?.depot.totalRevenue || 0).toLocaleString()}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        {salesSummary?.depot.orders.length || 0} orders
-                                    </p>
-                                </CardContent>
-                            </Card>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
                             <Card>
                                 <CardHeader>

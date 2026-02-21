@@ -48,9 +48,6 @@ export function OrderCard({
         <div className="p-4 border-b bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-bold text-primary">{order.order_number}</span>
-            <Badge variant="outline" className={order.order_type === "plant_direct" ? "border-blue-500 text-blue-600" : "border-green-500 text-green-600"}>
-              {order.order_type === "plant_direct" ? "🟦 Plant" : "🟩 Depot"}
-            </Badge>
           </div>
           <div className="flex items-center gap-1">
             {order.status !== "delivered" && (

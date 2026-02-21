@@ -142,24 +142,8 @@ export function useSalesSummary(startDate?: Date, endDate?: Date, enabled = true
 
             if (error) throw error;
 
-            // Aggregate data
-            const plantDirectOrders = (data || []).filter(o => o.order_type === 'plant_direct');
-            const depotOrders = (data || []).filter(o => o.order_type === 'depot_dispatch');
-
             return {
                 all: data || [],
-                plantDirect: {
-                    orders: plantDirectOrders,
-                    totalTons: plantDirectOrders.filter(o => o.unit === 'tons').reduce((sum, o) => sum + (o.quantity || 0), 0),
-                    totalBags: plantDirectOrders.filter(o => o.unit === 'bags').reduce((sum, o) => sum + (o.quantity || 0), 0),
-                    totalRevenue: plantDirectOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-                },
-                depot: {
-                    orders: depotOrders,
-                    totalTons: depotOrders.filter(o => o.unit === 'tons').reduce((sum, o) => sum + (o.quantity || 0), 0),
-                    totalBags: depotOrders.filter(o => o.unit === 'bags').reduce((sum, o) => sum + (o.quantity || 0), 0),
-                    totalRevenue: depotOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-                },
                 totalTons: (data || []).filter(o => o.unit === 'tons').reduce((sum, o) => sum + (o.quantity || 0), 0),
                 totalBags: (data || []).filter(o => o.unit === 'bags').reduce((sum, o) => sum + (o.quantity || 0), 0),
                 totalRevenue: (data || []).reduce((sum, o) => sum + (o.total_amount || 0), 0),

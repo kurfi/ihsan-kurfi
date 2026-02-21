@@ -134,14 +134,11 @@ export function useCreateOrder() {
       atc_number?: string;
       cap_number?: string;
     }) => {
-      // 1. Depot Dispatch Logic - DROPSHIPPING UPDATE: No local stock reservation.
       // We process the order directly.
-      if (order.order_type === "depot_dispatch") {
-        if (!order.depot_id) throw new Error("Depot/Source is required for Depot Dispatch");
-      }
+      if (!order.depot_id) throw new Error("Product Source is required");
 
       // 2. Create Order
-      const { supplier_id, transport_cost, ...orderData } = order;
+      const { transport_cost, ...orderData } = order;
 
       const { data: newOrder, error: orderError } = await supabase
         .from("orders")
@@ -177,31 +174,7 @@ export function useCreateOrder() {
         }
       }
 
-      // 3. Plant Direct Logic
-      if (order.order_type === "plant_direct" && supplier_id) {
-        const { data: supplier } = await supabase
-          .from("suppliers")
-          .select("name")
-          .eq("id", supplier_id)
-          .single();
-
-        const { error: poError } = await supabase
-          .from("purchases")
-          .insert({
-            supplier_id: supplier_id,
-            supplier_name: supplier?.name || "Unknown",
-            sales_order_id: newOrder.id,
-            cement_type: order.cement_type,
-            quantity: order.quantity,
-            unit: order.unit || "bags",
-            status: "ordered",
-            total_cost: 0
-          });
-
-        if (poError) {
-          console.error("Failed to create linked Purchase Order", poError);
-        }
-      }
+      // 3. Plant Direct Logic - REMOVED, all orders are now universally sourced
 
       return newOrder;
     },
@@ -382,7 +355,7 @@ export function useDeleteOrder() {
       }
       */
 
-      // 2. Delete linked purchase if plant direct
+      // 2. Delete linked purchase if plant direct (legacy check)
       if (order.order_type === "plant_direct") {
         await supabase
           .from("purchases")
