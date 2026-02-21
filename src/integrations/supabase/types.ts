@@ -503,7 +503,6 @@ export type Database = {
           loading_manifest_number: string | null
           notes: string | null
           order_number: string | null
-          order_type: Database["public"]["Enums"]["order_type"]
           payment_status: string | null
           quantity: number
           status: Database["public"]["Enums"]["order_status"]
@@ -536,7 +535,6 @@ export type Database = {
           loading_manifest_number?: string | null
           notes?: string | null
           order_number?: string | null
-          order_type: Database["public"]["Enums"]["order_type"]
           payment_status?: string | null
           quantity: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -570,7 +568,6 @@ export type Database = {
           loading_manifest_number?: string | null
           notes?: string | null
           order_number?: string | null
-          order_type?: Database["public"]["Enums"]["order_type"]
           payment_status?: string | null
           quantity?: number
           status?: Database["public"]["Enums"]["order_status"]
@@ -1152,49 +1149,6 @@ export type Database = {
       }
 
 
-      trip_profitability_detailed: {
-        Row: {
-          id: string | null
-          order_number: string | null
-          created_at: string | null
-          status: Database["public"]["Enums"]["order_status"] | null
-          customer_name: string | null
-          cement_type: string | null
-          quantity: number | null
-          unit: Database["public"]["Enums"]["product_unit"] | null
-          cement_sale_price: number | null
-          total_cement_sale: number | null
-          cement_purchase_price: number | null
-          total_cement_purchase: number | null
-          fuel_cost: number | null
-          driver_allowance: number | null
-          other_trip_costs: number | null
-          total_trip_cost: number | null
-          cement_profit: number | null
-          cement_margin_percent: number | null
-          total_trip_profit: number | null
-          payment_status: Database["public"]["Enums"]["payment_status_type"] | null
-          payment_terms: string | null
-        }
-        Relationships: []
-      }
-      trip_profitability_v2: {
-        Row: {
-          id: string | null
-          order_number: string | null
-          created_at: string | null
-          quantity: number | null
-          unit: Database["public"]["Enums"]["product_unit"] | null
-          total_sale: number | null
-          total_purchase: number | null
-          cement_profit: number | null
-          fuel_cost: number | null
-          driver_allowance: number | null
-          other_trip_costs: number | null
-          total_logistics_cost: number | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       calculate_customer_aging: {
@@ -1229,7 +1183,7 @@ export type Database = {
       | "road_worthiness"
       | "hackney_permit"
       | "heavy_duty_permit"
-      | "vehicle_registration"
+      | "vehicle_registration",
       expense_category:
       | "fuel"
       | "driver_allowance"
@@ -1239,20 +1193,19 @@ export type Database = {
       | "insurance"
       | "license"
       | "office"
-      | "other"
+      | "other",
       order_status:
       | "requested"
       | "in_gate"
       | "loaded"
       | "dispatched"
-      | "delivered"
-      order_type: "plant_direct" | "depot_dispatch"
-      payment_status_type: "Pending" | "Confirmed" | "Rejected"
-      price_tier_type: "Wholesaler" | "Retailer" | "End-User"
-      product_unit: "tons" | "bags"
-      purchase_status: "ordered" | "received" | "cancelled"
-      shortage_liability: "driver" | "company"
-      shortage_status: "pending" | "approved" | "deducted"
+      | "delivered",
+      payment_status_type: "Pending" | "Confirmed" | "Rejected",
+      price_tier_type: "Wholesaler" | "Retailer" | "End-User",
+      product_unit: "tons" | "bags",
+      purchase_status: "ordered" | "received" | "cancelled",
+      shortage_liability: "driver" | "company",
+      shortage_status: "pending" | "approved" | "deducted",
       transaction_type:
       | "shortage_deduction"
       | "allowance"
@@ -1394,7 +1347,6 @@ export const Constants = {
         "dispatched",
         "delivered",
       ],
-      order_type: ["plant_direct", "depot_dispatch"],
       payment_status_type: ["Pending", "Confirmed", "Rejected"],
       price_tier_type: ["Wholesaler", "Retailer", "End-User"],
       product_unit: ["tons", "bags"],

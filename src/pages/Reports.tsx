@@ -18,7 +18,7 @@ import {
     useDailyCashPosition,
     usePaginatedDirectDeliveries,
 } from '@/hooks/useReports';
-import { useMonthlyProfitLoss, useReceivablesAging, useTripProfitabilityDetailed } from '@/hooks/useFinancialReports';
+import { useMonthlyProfitLoss, useReceivablesAging } from '@/hooks/useFinancialReports';
 
 import { DualStreamCard } from '@/components/reports/DualStreamCard';
 import { FileDown, TrendingUp, TrendingDown, AlertTriangle, Banknote, Package, Truck, Users, FileText } from 'lucide-react';
@@ -62,7 +62,6 @@ export default function Reports() {
     const { data: cashPosition, isLoading: cashLoading } = useDailyCashPosition(undefined, isFinanceTab);
     const { data: monthlyPL = [], isLoading: loadingPL } = useMonthlyProfitLoss(undefined, undefined, isFinanceTab);
     const { data: receivables = [], isLoading: loadingReceivables } = useReceivablesAging(isFinanceTab);
-    const { data: tripProfit = [], isLoading: loadingTrips } = useTripProfitabilityDetailed(isFinanceTab);
     const { data: directDropsData, isLoading: loadingDirectDrops } = usePaginatedDirectDeliveries(directPage, PAGE_SIZE, isFinanceTab);
     const directDrops = directDropsData?.items || [];
     const directCount = directDropsData?.count || 0;
@@ -535,7 +534,6 @@ export default function Reports() {
                                 <TabsTrigger value="overview" className="text-xs">Cash Position</TabsTrigger>
                                 <TabsTrigger value="pl" className="text-xs">Profit & Loss</TabsTrigger>
                                 <TabsTrigger value="aging" className="text-xs">Debtors Aging</TabsTrigger>
-                                <TabsTrigger value="trips" className="text-xs">Trip Profit</TabsTrigger>
                                 <TabsTrigger value="dual-stream" className="text-xs">Dual-Stream</TabsTrigger>
                             </TabsList>
 
@@ -817,197 +815,6 @@ export default function Reports() {
                                 </Card>
                             </TabsContent>
 
-                            {/* Trip Profitability (merged from FinancialReports + DirectDeliveries) */}
-                            <TabsContent value="trips" className="space-y-4">
-                                <Card className="shadow-card">
-                                    <CardHeader className="flex flex-row items-center justify-between">
-                                        <div>
-                                            <CardTitle className="heading-section flex items-center gap-2">
-                                                <TrendingUp className="h-5 w-5 text-primary" />
-                                                Trip Profitability Analysis
-                                            </CardTitle>
-                                            <CardDescription>Detailed profit breakdown by trip</CardDescription>
-                                        </div>
-                                        <Button
-                                            onClick={() => exportToExcel(tripProfit as any, 'trip_profitability')}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            <FileDown className="h-4 w-4 mr-2" />
-                                            Export Excel
-                                        </Button>
-                                    </CardHeader>
-                                    <CardContent className="p-0">
-                                        {loadingTrips ? (
-                                            <div className="p-4">
-                                                <LoadingSkeleton variant="table" rows={5} />
-                                            </div>
-                                        ) : (
-                                            <div className="overflow-x-auto">
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Order #</TableHead>
-                                                            <TableHead>Customer</TableHead>
-                                                            <TableHead>Product</TableHead>
-                                                            <TableHead className="text-right">Qty</TableHead>
-                                                            <TableHead className="text-right">Sale Price</TableHead>
-                                                            <TableHead className="text-right">Cost Price</TableHead>
-                                                            <TableHead className="text-right">Trip Costs</TableHead>
-                                                            <TableHead className="text-right">Total Profit</TableHead>
-                                                            <TableHead className="text-right">Margin %</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {tripProfit.slice(0, 50).map((trip) => (
-                                                            <TableRow key={trip.id}>
-                                                                <TableCell className="font-medium">{trip.order_number || '-'}</TableCell>
-                                                                <TableCell>{trip.customer_name || '-'}</TableCell>
-                                                                <TableCell>{trip.cement_type}</TableCell>
-                                                                <TableCell className="text-right">{trip.quantity} {trip.unit}</TableCell>
-                                                                <TableCell className="text-right">₦{(trip.total_cement_sale || 0).toLocaleString()}</TableCell>
-                                                                <TableCell className="text-right">₦{(trip.total_cement_purchase || 0).toLocaleString()}</TableCell>
-                                                                <TableCell className="text-right">₦{(trip.total_trip_cost || 0).toLocaleString()}</TableCell>
-                                                                <TableCell className={`text-right font-semibold ${(trip.total_trip_profit || 0) >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                                                    ₦{(trip.total_trip_profit || 0).toLocaleString()}
-                                                                </TableCell>
-                                                                <TableCell className="text-right">
-                                                                    {trip.cement_margin_percent?.toFixed(1) || 0}%
-                                                                </TableCell>
-                                                            </TableRow>
-                                                        ))}
-                                                    </TableBody>
-                                                </Table>
-                                            </div>
-                                        )}
-                                    </CardContent>
-                                </Card>
-
-                                {/* Direct Delivery Analysis (from DirectDeliveriesReport) */}
-                                <Card className="shadow-card">
-                                    <CardHeader>
-                                        <CardTitle className="heading-section flex items-center gap-2">
-                                            <Package className="h-5 w-5 text-blue-500" />
-                                            Direct Delivery Profitability
-                                        </CardTitle>
-                                        <CardDescription>Exact margins for every direct-to-site delivery</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        {/* Summary Row */}
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                            <div className="text-center p-3 bg-muted/50 rounded-lg">
-                                                <p className="text-xs text-muted-foreground">Revenue</p>
-                                                <p className="text-lg font-bold">₦{directDrops.reduce((sum, d) => sum + (d.total_amount || 0), 0).toLocaleString()}</p>
-                                            </div>
-                                            <div className="text-center p-3 bg-muted/50 rounded-lg">
-                                                <p className="text-xs text-muted-foreground">Net Profit</p>
-                                                <p className={`text-lg font-bold ${directDrops.reduce((sum, d) => sum + (d.trip_profit || 0), 0) >= 0 ? 'text-success' : 'text-destructive'}`}>
-                                                    ₦{directDrops.reduce((sum, d) => sum + (d.trip_profit || 0), 0).toLocaleString()}
-                                                </p>
-                                            </div>
-                                            <div className="text-center p-3 bg-success/10 rounded-lg">
-                                                <p className="text-xs text-muted-foreground">Profitable</p>
-                                                <p className="text-lg font-bold text-success flex items-center justify-center gap-1">
-                                                    <TrendingUp className="w-4 h-4" />
-                                                    {directDrops.filter(d => (d.trip_profit || 0) > 0).length}
-                                                </p>
-                                            </div>
-                                            <div className="text-center p-3 bg-destructive/10 rounded-lg">
-                                                <p className="text-xs text-muted-foreground">Loss-Making</p>
-                                                <p className="text-lg font-bold text-destructive flex items-center justify-center gap-1">
-                                                    <TrendingDown className="w-4 h-4" />
-                                                    {directDrops.filter(d => (d.trip_profit || 0) < 0).length}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        {loadingDirectDrops ? (
-                                            <LoadingSkeleton variant="table" rows={5} />
-                                        ) : directDrops.length === 0 ? (
-                                            <EmptyState
-                                                icon={Package}
-                                                title="No Direct Deliveries"
-                                                description="Direct delivery data will appear here"
-                                            />
-                                        ) : (
-                                            <ResponsiveTable>
-                                                <Table>
-                                                    <TableHeader>
-                                                        <TableRow>
-                                                            <TableHead>Order No.</TableHead>
-                                                            <TableHead>Customer</TableHead>
-                                                            <TableHead>Status</TableHead>
-                                                            <TableHead>Revenue</TableHead>
-                                                            <TableHead>Transport</TableHead>
-                                                            <TableHead>Net Profit</TableHead>
-                                                            <TableHead>Date</TableHead>
-                                                        </TableRow>
-                                                    </TableHeader>
-                                                    <TableBody>
-                                                        {directDrops.map((order) => {
-                                                            const profit = order.trip_profit ?? 0;
-                                                            const isDelivered = order.status === 'delivered';
-
-                                                            return (
-                                                                <TableRow key={order.id}>
-                                                                    <TableCell className="font-medium">#{order.order_number}</TableCell>
-                                                                    <TableCell>{order.customers?.name}</TableCell>
-                                                                    <TableCell>
-                                                                        <Badge variant={isDelivered ? "default" : "secondary"} className={isDelivered ? "bg-success/20 text-success border-success/30" : ""}>
-                                                                            {order.status.toUpperCase()}
-                                                                        </Badge>
-                                                                    </TableCell>
-                                                                    <TableCell>₦{order.total_amount?.toLocaleString()}</TableCell>
-                                                                    <TableCell>₦{order.transport_cost?.toLocaleString()}</TableCell>
-                                                                    <TableCell>
-                                                                        {!isDelivered ? (
-                                                                            <span className="text-muted-foreground italic text-xs">Pending Delivery</span>
-                                                                        ) : (
-                                                                            <div className={`font-bold flex items-center gap-1 ${profit >= 0 ? "text-success" : "text-destructive"}`}>
-                                                                                <Banknote className="w-3 h-3" />
-                                                                                {profit.toLocaleString()}
-                                                                                {profit < 0 && <TrendingDown className="w-3 h-3 ml-1" />}
-                                                                                {profit >= 0 && <TrendingUp className="w-3 h-3 ml-1" />}
-                                                                            </div>
-                                                                        )}
-                                                                    </TableCell>
-                                                                    <TableCell className="text-muted-foreground text-sm">
-                                                                        {format(new Date(order.created_at), 'dd MMM yyyy')}
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        })}
-                                                    </TableBody>
-                                                </Table>
-                                            </ResponsiveTable>
-                                        )}
-
-                                        <div className="flex items-center justify-between mt-4">
-                                            <p className="text-sm text-muted-foreground">
-                                                Page {directPage} of {Math.ceil(directCount / PAGE_SIZE)} ({directCount} total drops)
-                                            </p>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={directPage === 1}
-                                                    onClick={() => setDirectPage(p => p - 1)}
-                                                >
-                                                    Previous
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={directPage * PAGE_SIZE >= directCount}
-                                                    onClick={() => setDirectPage(p => p + 1)}
-                                                >
-                                                    Next
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </TabsContent>
 
                             {/* Dual-Stream Analysis */}
                             <TabsContent value="dual-stream" className="space-y-4">

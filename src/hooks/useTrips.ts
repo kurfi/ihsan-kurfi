@@ -69,20 +69,6 @@ export function useAddHaulagePayment() {
     });
 }
 
-export function useTripProfitability() {
-    return useQuery({
-        queryKey: ["trip_profitability"],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from("trip_profitability_v2")
-                .select("*")
-                .order("created_at", { ascending: false });
-
-            if (error) throw error;
-            return data;
-        },
-    });
-}
 
 // Hook to update trip details (fuel, allowance, etc)
 export function useUpdateTrip() {
@@ -102,7 +88,6 @@ export function useUpdateTrip() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["trips"] });
-            queryClient.invalidateQueries({ queryKey: ["trip_profitability"] });
             toast({ title: "Trip updated successfully" });
         },
         onError: (error: any) => {

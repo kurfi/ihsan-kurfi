@@ -26,29 +26,6 @@ export interface ReceivableAging {
     days_outstanding: number;
 }
 
-export interface TripProfitability {
-    id: string;
-    order_number: string | null;
-    created_at: string;
-    status: string;
-    customer_name: string | null;
-    cement_type: string;
-    quantity: number;
-    unit: string;
-    cement_sale_price: number | null;
-    total_cement_sale: number | null;
-    cement_purchase_price: number | null;
-    total_cement_purchase: number | null;
-    fuel_cost: number | null;
-    driver_allowance: number | null;
-    other_trip_costs: number | null;
-    total_trip_cost: number | null;
-    cement_profit: number | null;
-    cement_margin_percent: number | null;
-    total_trip_profit: number | null;
-    payment_status: string | null;
-    payment_terms: string | null;
-}
 
 export function useMonthlyProfitLoss(startDate?: string, endDate?: string, enabled = true) {
     return useQuery({
@@ -90,22 +67,6 @@ export function useReceivablesAging(enabled = true) {
     });
 }
 
-export function useTripProfitabilityDetailed(enabled = true) {
-    return useQuery({
-        queryKey: ["trip-profitability-detailed"],
-        enabled,
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from("trip_profitability_detailed" as any)
-                .select("*")
-                .order("created_at", { ascending: false })
-                .limit(100);
-
-            if (error) throw error;
-            return (data as any) as TripProfitability[];
-        },
-    });
-}
 
 // Helper function to get current month P&L
 export function useCurrentMonthPL() {

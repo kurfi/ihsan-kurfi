@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Database } from "@/integrations/supabase/types";
 
-export type OrderType = Database["public"]["Enums"]["order_type"];
 export type OrderStatus = Database["public"]["Enums"]["order_status"];
 export type ProductUnit = Database["public"]["Enums"]["product_unit"];
 
@@ -12,7 +11,6 @@ export interface Order {
   id: string;
   order_number: string | null;
   customer_id: string | null;
-  order_type: OrderType;
   depot_id: string | null;
   truck_id: string | null;
   driver_id: string | null;
@@ -112,7 +110,6 @@ export function useCreateOrder() {
   return useMutation({
     mutationFn: async (order: {
       customer_id: string;
-      order_type: OrderType;
       depot_id?: string;
       cement_type: string;
       quantity: number;
@@ -355,13 +352,7 @@ export function useDeleteOrder() {
       }
       */
 
-      // 2. Delete linked purchase if plant direct (legacy check)
-      if (order.order_type === "plant_direct") {
-        await supabase
-          .from("purchases")
-          .delete()
-          .eq("sales_order_id", order.id);
-      }
+      // 3. Delete linked records (expenses, payments, etc.) that might block deletion
 
       // 3. Delete linked records (expenses, payments, etc.) that might block deletion
       // Constraints found earlier: expenses, payments, shortages, driver_transactions

@@ -42,7 +42,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
 
     const [form, setForm] = useState({
         customer_id: "",
-        order_type: "depot_dispatch" as OrderType, // Hardcoded, hidden from UI
         depot_id: "", // Renamed to Product Source in UI
         cement_type: "Portland Cement",
         quantity: "",
@@ -101,7 +100,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
     const resetForm = () => {
         setForm({
             customer_id: "",
-            order_type: "depot_dispatch",
             depot_id: "",
             cement_type: "Portland Cement",
             quantity: "",
@@ -131,7 +129,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         createOrder.mutate(
             {
                 customer_id: form.customer_id,
-                order_type: form.order_type, // Hardcoded to depot_dispatch
                 depot_id: form.depot_id,
                 cement_type: form.cement_type,
                 quantity: qty,

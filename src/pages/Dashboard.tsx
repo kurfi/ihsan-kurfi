@@ -61,12 +61,6 @@ export default function Dashboard() {
             <button className="px-4 py-2 rounded-xl bg-card border border-border text-sm font-medium hover:bg-accent transition-colors">
               Last 24h
             </button>
-            <button
-              onClick={() => navigate("/orders", { state: { openNewOrder: true } })}
-              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-medium shadow-glow hover:bg-primary/90 transition-colors"
-            >
-              New Order
-            </button>
           </div>
         </div>
 
