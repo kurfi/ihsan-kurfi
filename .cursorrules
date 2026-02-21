@@ -1,0 +1,2 @@
+# Supabase Operations Rule
+For all Supabase-related operations, queries, database changes, or schema updates, you MUST use the provided Supabase MCP server (`supabase-mcp-server`) tools instead of running commands in the terminal (e.g., `npx supabase ...` or `supabase ...`).

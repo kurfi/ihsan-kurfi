@@ -1150,67 +1150,8 @@ export type Database = {
         }
         Relationships: []
       }
-      transit_shipments: {
-        Row: {
-          id: string | null
-          order_number: string | null
-          customer_id: string | null
-          order_type: Database["public"]["Enums"]["order_type"] | null
-          depot_id: string | null
-          truck_id: string | null
-          driver_id: string | null
-          cement_type: string | null
-          quantity: number | null
-          status: Database["public"]["Enums"]["order_status"] | null
-          total_amount: number | null
-          delivery_address: string | null
-          notes: string | null
-          created_at: string | null
-          updated_at: string | null
-          dispatch_date: string | null
-          delivery_date: string | null
-          estimated_delivery_date: string | null
-          carrier_name: string | null
-          carrier_contact: string | null
-          tracking_number: string | null
-          cap_number: string | null
-          gate_pass_number: string | null
-          waybill_url: string | null
-          loading_manifest_number: string | null
-          cost_price: number | null
-          delivery_otp: string | null
-          unit: Database["public"]["Enums"]["product_unit"] | null
-          customer_name: string | null
-          customer_phone: string | null
-          customer_address: string | null
-          plate_number: string | null
-          truck_model: string | null
-          driver_name: string | null
-          driver_phone: string | null
-          depot_name: string | null
-          depot_location: string | null
-          estimated_hours: number | null
-          hours_in_transit: number | null
-          transit_status: string | null
-        }
-        Relationships: []
-      }
-      trip_profitability: {
-        Row: {
-          id: string | null
-          order_number: string | null
-          created_at: string | null
-          revenue: number | null
-          total_expenses: number | null
-          net_profit: number | null
-          profit_margin_percent: number | null
-          truck_id: string | null
-          plate_number: string | null
-          driver_id: string | null
-          driver_name: string | null
-        }
-        Relationships: []
-      }
+
+
       trip_profitability_detailed: {
         Row: {
           id: string | null

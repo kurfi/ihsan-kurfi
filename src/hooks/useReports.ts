@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 
 export type ExpiringDocument = Tables<'expiring_documents'>;
-export type TripProfitability = Tables<'trip_profitability'>;
 export type DualStreamProfitability = {
     id: string;
     order_number: string;
@@ -49,21 +48,6 @@ export function useExpiringDocuments(enabled = true) {
     });
 }
 
-// Trip Profitability Report
-export function useTripProfitability() {
-    return useQuery({
-        queryKey: ['trip-profitability'],
-        queryFn: async () => {
-            const { data, error } = await supabase
-                .from('trip_profitability')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            return (data || []) as TripProfitability[];
-        },
-    });
-}
 
 // Dual Stream Profitability Report
 export function useDualStreamProfitability(enabled = true) {
