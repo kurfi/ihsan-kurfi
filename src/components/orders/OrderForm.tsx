@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Plus } from "lucide-react";
-import { useCreateOrder, type OrderType } from "@/hooks/useOrders";
+import { useCreateOrder } from "@/hooks/useOrders";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useDepots, useProducts } from "@/hooks/useProductCatalog";
 import { useSuppliers } from "@/hooks/usePurchases";
@@ -273,7 +273,7 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-lg border border-primary/10">
+                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-3 rounded-lg border border-primary/10 pointer-events-none select-none">
                         <div className="space-y-1">
                             <Label className="text-[10px] uppercase font-bold text-muted-foreground">Cost Price</Label>
                             <p className="font-mono text-sm font-semibold">₦{automatedPricing.purchase_price.toLocaleString()}</p>
