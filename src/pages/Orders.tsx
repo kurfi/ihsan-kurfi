@@ -253,7 +253,7 @@ export default function Orders() {
     const fuelCost = selectedTruck?.default_fuel_cost || 0;
     const allowance = selectedDriver?.standard_allowance || 0;
 
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     updateStatus.mutate({
       id: selectedOrder,
@@ -405,7 +405,6 @@ export default function Orders() {
                       <TableHead>Order # / Waybill</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Qty</TableHead>
-                      <TableHead>Logistics (₦)</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Unit / Driver</TableHead>
                       <TableHead>Actions</TableHead>
@@ -420,12 +419,6 @@ export default function Orders() {
                         </TableCell>
                         <TableCell>{order.customer?.name}</TableCell>
                         <TableCell>{order.quantity} {order.unit === 'tons' ? 'T' : 'B'}</TableCell>
-                        <TableCell>
-                          <div className="text-[10px] space-y-0.5">
-                            <div>Fuel: {(order.fuel_cost || 0).toLocaleString()}</div>
-                            <div>Alw: {(order.driver_allowance || 0).toLocaleString()}</div>
-                          </div>
-                        </TableCell>
                         <TableCell>
                           <Badge className={statusColors[order.status]}>
                             {formatStatus(order.status)}
