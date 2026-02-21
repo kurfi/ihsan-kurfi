@@ -4,7 +4,7 @@ import { MetricCard } from "@/components/dashboard/MetricCard";
 import { AlertsList } from "@/components/dashboard/AlertsList";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { useOrders } from "@/hooks/useOrders";
+import { useDashboardOrderMetrics } from "@/hooks/useOrders";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useTrucks } from "@/hooks/useFleet";
 import { useCustomers } from "@/hooks/useCustomers";
@@ -18,27 +18,25 @@ import { useCurrentMonthPL, useTotalReceivables } from "@/hooks/useFinancialRepo
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { data: orders = [], isLoading: ordersLoading } = useOrders();
-  const { data: documents = [], isLoading: docsLoading } = useDocuments();
+  const { data: docs = [], isLoading: docsLoading } = useDocuments();
   const { data: trucks = [], isLoading: trucksLoading } = useTrucks();
   const { data: customers = [], isLoading: customersLoading } = useCustomers();
   const { data: dualStreamData = [] } = useDualStreamProfitability();
   const currentMonthPL = useCurrentMonthPL();
   const { total: totalReceivables } = useTotalReceivables();
 
-  const isLoading = ordersLoading || docsLoading || trucksLoading || customersLoading;
+  const { data: metrics, isLoading: metricsLoading } = useDashboardOrderMetrics();
+  const ordersTodayCount = metrics?.ordersToday || 0;
+  const deliveredTodayCount = metrics?.deliveredToday || 0;
+
+  const isLoading = metricsLoading || docsLoading || trucksLoading || customersLoading;
 
   const activeTrucks = trucks.filter((t) => t.is_active).length;
-  const activeOrders = orders.filter((o) => o.status !== "delivered").length;
 
-  const expiringDocs = documents.filter((doc) => {
+  const expiringDocs = docs.filter((doc) => {
     const days = differenceInDays(new Date(doc.expiry_date), new Date());
     return days <= 30 || isPast(new Date(doc.expiry_date));
   });
-
-  const totalSales = orders
-    .filter((o) => o.status === "delivered")
-    .reduce((sum, o) => sum + (o.total_amount || 0), 0);
 
   // Calculate dual-stream aggregates
   // Calculate dual-stream aggregates from current month P&L
@@ -158,7 +156,7 @@ export default function Dashboard() {
             <div className="relative z-10">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Orders Today</p>
               <p className="text-3xl font-black text-foreground text-glow">
-                {orders.filter((o) => new Date(o.created_at).toDateString() === new Date().toDateString()).length}
+                {ordersTodayCount}
               </p>
             </div>
           </motion.div>
@@ -174,10 +172,7 @@ export default function Dashboard() {
             <div className="relative z-10">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-1">Delivered Today</p>
               <p className="text-3xl font-black text-foreground text-glow">
-                {orders.filter((o) =>
-                  o.status === "delivered" &&
-                  new Date(o.updated_at).toDateString() === new Date().toDateString()
-                ).length}
+                {deliveredTodayCount}
               </p>
             </div>
           </motion.div>
@@ -214,7 +209,7 @@ export default function Dashboard() {
                   System <span className="text-vibrant-rose/60">Alerts</span>
                 </h3>
               </div>
-              <AlertsList documents={documents} />
+              <AlertsList documents={docs} />
             </VibrantCard>
           </div>
         </div>

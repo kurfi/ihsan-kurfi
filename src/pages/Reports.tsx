@@ -14,9 +14,9 @@ import {
     useCustomerAging,
     useFleetAvailability,
     useSalesSummary,
-    usePendingDeliveries,
+    usePaginatedPendingDeliveries,
     useDailyCashPosition,
-    useDirectDeliveries,
+    usePaginatedDirectDeliveries,
 } from '@/hooks/useReports';
 import { useMonthlyProfitLoss, useReceivablesAging, useTripProfitabilityDetailed } from '@/hooks/useFinancialReports';
 
@@ -33,10 +33,14 @@ import { PendingDeliveryCard } from '@/components/reports/PendingDeliveryCard';
 import { CustomerAgingCard } from '@/components/reports/CustomerAgingCard';
 
 export default function Reports() {
-    // Track which top-level tab is active to avoid firing all queries at once
     const [activeTab, setActiveTab] = useState('compliance');
     // Financial sub-tab state
     const [financeSubTab, setFinanceSubTab] = useState('overview');
+
+    // Pagination state for reports
+    const [pendingPage, setPendingPage] = useState(1);
+    const [directPage, setDirectPage] = useState(1);
+    const PAGE_SIZE = 15;
 
     // Compliance tab queries — only run when compliance tab is active
     const isComplianceTab = activeTab === 'compliance';
@@ -48,7 +52,9 @@ export default function Reports() {
     // Sales tab queries — only run when sales tab is active
     const isSalesTab = activeTab === 'sales';
     const { data: salesSummary, isLoading: salesLoading } = useSalesSummary(undefined, undefined, isSalesTab);
-    const { data: pendingDeliveries = [], isLoading: deliveriesLoading } = usePendingDeliveries(isSalesTab);
+    const { data: pendingDeliveriesData, isLoading: deliveriesLoading } = usePaginatedPendingDeliveries(pendingPage, PAGE_SIZE, isSalesTab);
+    const pendingDeliveries = pendingDeliveriesData?.items || [];
+    const pendingCount = pendingDeliveriesData?.count || 0;
 
     // Finance tab queries — only run when finance tab is active
     const isFinanceTab = activeTab === 'finance';
@@ -57,7 +63,9 @@ export default function Reports() {
     const { data: monthlyPL = [], isLoading: loadingPL } = useMonthlyProfitLoss(undefined, undefined, isFinanceTab);
     const { data: receivables = [], isLoading: loadingReceivables } = useReceivablesAging(isFinanceTab);
     const { data: tripProfit = [], isLoading: loadingTrips } = useTripProfitabilityDetailed(isFinanceTab);
-    const { data: directDrops = [], isLoading: loadingDirectDrops } = useDirectDeliveries(isFinanceTab);
+    const { data: directDropsData, isLoading: loadingDirectDrops } = usePaginatedDirectDeliveries(directPage, PAGE_SIZE, isFinanceTab);
+    const directDrops = directDropsData?.items || [];
+    const directCount = directDropsData?.count || 0;
     const { data: dualStreamData = [] } = useDualStreamProfitability(isFinanceTab);
 
     const currentMonth = monthlyPL[0];
@@ -333,7 +341,7 @@ export default function Reports() {
                                         ₦{(salesSummary?.totalRevenue || 0).toLocaleString()}
                                     </p>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                        {salesSummary?.all.length || 0} orders
+                                        {salesSummary?.count || 0} orders
                                     </p>
                                 </CardContent>
                             </Card>
@@ -356,63 +364,91 @@ export default function Reports() {
                                 </Button>
                             </CardHeader>
                             <CardContent>
-                                <>
-                                    <div className="md:hidden grid gap-4">
-                                        {pendingDeliveries.length === 0 ? (
-                                            <EmptyState
-                                                icon={Truck}
-                                                title="No pending deliveries"
-                                                description="All orders have been delivered"
-                                            />
-                                        ) : (
-                                            pendingDeliveries.map((order) => (
-                                                <PendingDeliveryCard key={order.id} order={order} />
-                                            ))
-                                        )}
-                                    </div>
-                                    <div className="hidden md:block">
-                                        <ResponsiveTable>
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead>Order No.</TableHead>
-                                                        <TableHead>Customer</TableHead>
-                                                        <TableHead>Quantity</TableHead>
-                                                        <TableHead>Truck</TableHead>
-                                                        <TableHead>Driver</TableHead>
-                                                        <TableHead>Status</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {pendingDeliveries.length === 0 ? (
+                                {deliveriesLoading ? (
+                                    <LoadingSkeleton variant="table" rows={5} />
+                                ) : (
+                                    <>
+                                        <div className="md:hidden grid gap-4">
+                                            {pendingDeliveries.length === 0 ? (
+                                                <EmptyState
+                                                    icon={Truck}
+                                                    title="No pending deliveries"
+                                                    description="All orders have been delivered"
+                                                />
+                                            ) : (
+                                                pendingDeliveries.map((order) => (
+                                                    <PendingDeliveryCard key={order.id} order={order} />
+                                                ))
+                                            )}
+                                        </div>
+                                        <div className="hidden md:block">
+                                            <ResponsiveTable>
+                                                <Table>
+                                                    <TableHeader>
                                                         <TableRow>
-                                                            <TableCell colSpan={6} className="text-center py-8">
-                                                                <EmptyState
-                                                                    icon={Truck}
-                                                                    title="No pending deliveries"
-                                                                    description="All orders have been delivered"
-                                                                />
-                                                            </TableCell>
+                                                            <TableHead>Order No.</TableHead>
+                                                            <TableHead>Customer</TableHead>
+                                                            <TableHead>Quantity</TableHead>
+                                                            <TableHead>Truck</TableHead>
+                                                            <TableHead>Driver</TableHead>
+                                                            <TableHead>Status</TableHead>
                                                         </TableRow>
-                                                    ) : (
-                                                        pendingDeliveries.map((order) => (
-                                                            <TableRow key={order.id}>
-                                                                <TableCell className="font-medium">{order.order_number}</TableCell>
-                                                                <TableCell>{order.customers?.name || 'N/A'}</TableCell>
-                                                                <TableCell>{order.quantity} {order.unit === 'tons' ? 'Tons' : 'Bags'}</TableCell>
-                                                                <TableCell>{order.trucks?.plate_number || 'Not Assigned'}</TableCell>
-                                                                <TableCell>{order.drivers?.name || 'Not Assigned'}</TableCell>
-                                                                <TableCell>
-                                                                    <Badge variant="secondary">{order.status?.replace('_', ' ').toUpperCase()}</Badge>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {pendingDeliveries.length === 0 ? (
+                                                            <TableRow>
+                                                                <TableCell colSpan={6} className="text-center py-8">
+                                                                    <EmptyState
+                                                                        icon={Truck}
+                                                                        title="No pending deliveries"
+                                                                        description="All orders have been delivered"
+                                                                    />
                                                                 </TableCell>
                                                             </TableRow>
-                                                        ))
-                                                    )}
-                                                </TableBody>
-                                            </Table>
-                                        </ResponsiveTable>
+                                                        ) : (
+                                                            pendingDeliveries.map((order) => (
+                                                                <TableRow key={order.id}>
+                                                                    <TableCell className="font-medium">{order.order_number}</TableCell>
+                                                                    <TableCell>{order.customers?.name || 'N/A'}</TableCell>
+                                                                    <TableCell>{order.quantity} {order.unit === 'tons' ? 'Tons' : 'Bags'}</TableCell>
+                                                                    <TableCell>{order.trucks?.plate_number || 'Not Assigned'}</TableCell>
+                                                                    <TableCell>{order.drivers?.name || 'Not Assigned'}</TableCell>
+                                                                    <TableCell>
+                                                                        <Badge variant="secondary">{order.status?.replace('_', ' ').toUpperCase()}</Badge>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            ))
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </ResponsiveTable>
+                                        </div>
+                                    </>
+                                )}
+
+                                <div className="flex items-center justify-between mt-4">
+                                    <p className="text-sm text-muted-foreground">
+                                        Showing {pendingDeliveries.length} of {pendingCount} deliveries
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={pendingPage === 1}
+                                            onClick={() => setPendingPage(p => p - 1)}
+                                        >
+                                            Previous
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            disabled={pendingPage * PAGE_SIZE >= pendingCount}
+                                            onClick={() => setPendingPage(p => p + 1)}
+                                        >
+                                            Next
+                                        </Button>
                                     </div>
-                                </>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -945,6 +981,30 @@ export default function Reports() {
                                                 </Table>
                                             </ResponsiveTable>
                                         )}
+
+                                        <div className="flex items-center justify-between mt-4">
+                                            <p className="text-sm text-muted-foreground">
+                                                Page {directPage} of {Math.ceil(directCount / PAGE_SIZE)} ({directCount} total drops)
+                                            </p>
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={directPage === 1}
+                                                    onClick={() => setDirectPage(p => p - 1)}
+                                                >
+                                                    Previous
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={directPage * PAGE_SIZE >= directCount}
+                                                    onClick={() => setDirectPage(p => p + 1)}
+                                                >
+                                                    Next
+                                                </Button>
+                                            </div>
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </TabsContent>

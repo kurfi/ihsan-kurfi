@@ -447,3 +447,143 @@ export function useConfirmPayment() {
     },
   });
 }
+
+export function usePaginatedOrders(page: number, limit: number, enabled = true) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const channel = supabase
+      .channel("paginated-orders-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["orders"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, enabled]);
+
+  return useQuery({
+    queryKey: ["orders", "paginated", page, limit],
+    enabled,
+    queryFn: async () => {
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+
+      const { data, error, count } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          customer:customers(name),
+          depot:depots(name),
+          truck:trucks(plate_number, capacity_tons),
+          driver:drivers(name, phone),
+          purchases:purchases!sales_order_id(atc_number, cap_number)
+        `, { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
+      return { orders: data as unknown as Order[], count: count || 0 };
+    },
+  });
+}
+
+export function useOrdersMetrics(enabled = true) {
+  return useQuery({
+    queryKey: ["orders-metrics"],
+    enabled,
+    queryFn: async () => {
+      // Fech minimal data for aggregation
+      const { data: statusData, error: statusError } = await supabase
+        .from("orders")
+        .select("status");
+
+      if (statusError) throw statusError;
+
+      const counts: Record<string, number> = {
+        requested: 0,
+        dispatched: 0,
+        delivered: 0,
+      };
+
+      statusData.forEach(row => {
+        const status = row.status as string;
+        if (status in counts) {
+          counts[status]++;
+        } else {
+          counts[status] = 1;
+        }
+      });
+
+      const { data: busyTruckData, error: busyError } = await supabase
+        .from("orders")
+        .select("truck_id")
+        .neq("status", "delivered")
+        .not("truck_id", "is", null);
+
+      if (busyError) throw busyError;
+
+      const busyTruckIds = Array.from(new Set(busyTruckData.map(r => r.truck_id).filter(Boolean))) as string[];
+
+      return { counts, busyTruckIds };
+    }
+  });
+}
+
+export function useDashboardOrderMetrics() {
+  return useQuery({
+    queryKey: ["dashboard-order-metrics"],
+    queryFn: async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString();
+
+      const { count: ordersToday, error: error1 } = await supabase
+        .from("orders")
+        .select("*", { count: 'exact', head: true })
+        .gte("created_at", todayStr);
+
+      if (error1) throw error1;
+
+      const { count: deliveredToday, error: error2 } = await supabase
+        .from("orders")
+        .select("*", { count: 'exact', head: true })
+        .eq("status", "delivered")
+        .gte("updated_at", todayStr);
+
+      if (error2) throw error2;
+
+      return {
+        ordersToday: ordersToday || 0,
+        deliveredToday: deliveredToday || 0
+      };
+    }
+  });
+}
+
+export function useRecentOrders(limit = 5) {
+  return useQuery({
+    queryKey: ["recent-orders", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select(`
+          id, order_number, created_at, quantity, unit, total_amount, status,
+          customer:customers(name)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data as unknown as Order[];
+    }
+  });
+}

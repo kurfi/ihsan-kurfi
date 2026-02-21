@@ -38,7 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useOrders, useUpdateOrderStatus, useUpdateOrder, useConfirmDispatch, useConfirmPayment, useDeleteOrder, useReassignFleet, type Order, type ProductUnit, type OrderStatus } from "@/hooks/useOrders";
+import { usePaginatedOrders, useOrdersMetrics, useUpdateOrderStatus, useUpdateOrder, useConfirmDispatch, useConfirmPayment, useDeleteOrder, useReassignFleet, type Order, type ProductUnit, type OrderStatus } from "@/hooks/useOrders";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useDepots, useProducts } from "@/hooks/useProductCatalog";
 import { useTrucks, useDrivers } from "@/hooks/useFleet";
@@ -86,7 +86,17 @@ function TripProfit({ orderId }: { orderId: string }) {
 export default function Orders() {
   const location = useLocation();
   const { toast } = useToast();
-  const { data: orders = [], isLoading } = useOrders();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 50;
+
+  const { data: paginatedData, isLoading: ordersLoading } = usePaginatedOrders(currentPage, pageSize);
+  const orders = paginatedData?.orders || [];
+  const totalOrders = paginatedData?.count || 0;
+
+  const { data: metrics, isLoading: metricsLoading } = useOrdersMetrics();
+
+  const isLoading = ordersLoading || metricsLoading;
   const { data: customers = [] } = useCustomers();
   const { data: depots = [] } = useDepots();
   const { data: products = [] } = useProducts();
@@ -160,9 +170,7 @@ export default function Orders() {
   };
 
   const getAvailableFleetUnits = () => {
-    const busyTruckIds = orders
-      .filter((o) => o.status !== "delivered" && o.truck_id)
-      .map((o) => o.truck_id);
+    const busyTruckIds = metrics?.busyTruckIds || [];
 
     return trucks.filter((t) => {
       const hasDriver = !!t.driver_id && !!t.driver;
@@ -345,7 +353,7 @@ export default function Orders() {
           <CardContent>
             <div className="flex items-center justify-between overflow-x-auto pb-4 scrollbar-thin">
               {statusPipeline.map((status, index) => {
-                const count = orders.filter(o => o.status === status).length;
+                const count = metrics?.counts?.[status] || 0;
                 return (
                   <div key={status} className="flex items-center">
                     <div className="text-center min-w-[100px]">
@@ -446,6 +454,29 @@ export default function Orders() {
                   </TableBody>
                 </Table>
               </ResponsiveTable>
+              <div className="flex items-center justify-between border-t p-4 pb-2">
+                <div className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * pageSize + (orders.length > 0 ? 1 : 0)} to {Math.min(currentPage * pageSize, totalOrders)} of {totalOrders} orders
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    disabled={currentPage * pageSize >= totalOrders}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}

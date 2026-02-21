@@ -1,4 +1,4 @@
-import { useOrders } from "@/hooks/useOrders";
+import { useRecentOrders } from "@/hooks/useOrders";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Package, Clock } from "lucide-react";
@@ -11,8 +11,7 @@ const statusColors: Record<string, string> = {
 };
 
 export const RecentOrders = () => {
-  const { data: orders = [], isLoading } = useOrders();
-  const recentOrders = orders.slice(0, 5);
+  const { data: recentOrders = [], isLoading } = useRecentOrders(5);
 
   if (isLoading) {
     return (

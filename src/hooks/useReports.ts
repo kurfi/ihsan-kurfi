@@ -108,11 +108,7 @@ export function useSalesSummary(startDate?: Date, endDate?: Date, enabled = true
         queryFn: async () => {
             let query = supabase
                 .from('orders')
-                .select(`
-          *,
-          customers(name),
-          depots(name)
-        `)
+                .select('quantity, unit, total_amount', { count: 'exact' })
                 .eq('status', 'delivered');
 
             if (startDate) {
@@ -122,21 +118,53 @@ export function useSalesSummary(startDate?: Date, endDate?: Date, enabled = true
                 query = query.lte('created_at', endDate.toISOString());
             }
 
-            const { data, error } = await query.order('created_at', { ascending: false });
+            const { data, count, error } = await query;
 
             if (error) throw error;
 
+            const totalTons = (data || []).filter(o => o.unit === 'tons').reduce((sum, o) => sum + (o.quantity || 0), 0);
+            const totalBags = (data || []).filter(o => o.unit === 'bags').reduce((sum, o) => sum + (o.quantity || 0), 0);
+            const totalRevenue = (data || []).reduce((sum, o) => sum + (o.total_amount || 0), 0);
+
             return {
-                all: data || [],
-                totalTons: (data || []).filter(o => o.unit === 'tons').reduce((sum, o) => sum + (o.quantity || 0), 0),
-                totalBags: (data || []).filter(o => o.unit === 'bags').reduce((sum, o) => sum + (o.quantity || 0), 0),
-                totalRevenue: (data || []).reduce((sum, o) => sum + (o.total_amount || 0), 0),
+                count: count || 0,
+                totalTons,
+                totalBags,
+                totalRevenue,
             };
         },
     });
 }
 
-// Pending Deliveries
+// Pending Deliveries with Pagination
+export function usePaginatedPendingDeliveries(page: number, limit: number, enabled = true) {
+    return useQuery({
+        queryKey: ['pending-deliveries-paginated', page, limit],
+        enabled,
+        queryFn: async () => {
+            const from = (page - 1) * limit;
+            const to = from + limit - 1;
+
+            const { data, error, count } = await supabase
+                .from('orders')
+                .select(`
+          *,
+          customers(name),
+          trucks(plate_number),
+          drivers(name)
+        `, { count: 'exact' })
+                .neq('status', 'delivered')
+                .order('created_at', { ascending: false })
+                .range(from, to);
+
+            if (error) throw error;
+            return { items: (data || []) as unknown as PendingOrder[], count: count || 0 };
+        },
+    });
+}
+
+// Keep original but deprecated or updated to use pagination if possible
+// For now, let's keep it for compatibility but mark it
 export function usePendingDeliveries(enabled = true) {
     return useQuery({
         queryKey: ['pending-deliveries'],
@@ -151,7 +179,8 @@ export function usePendingDeliveries(enabled = true) {
           drivers(name)
         `)
                 .neq('status', 'delivered')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(100); // Add a safety limit
 
             if (error) throw error;
             return (data || []) as unknown as PendingOrder[];
@@ -209,7 +238,32 @@ export function useDailyCashPosition(date?: Date, enabled = true) {
     });
 }
 
-// Direct Deliveries Report
+// Direct Deliveries Report with Pagination
+export function usePaginatedDirectDeliveries(page: number, limit: number, enabled = true) {
+    return useQuery({
+        queryKey: ['direct-deliveries-paginated', page, limit],
+        enabled,
+        queryFn: async () => {
+            const from = (page - 1) * limit;
+            const to = from + limit - 1;
+
+            const { data, error, count } = await supabase
+                .from('orders')
+                .select(`
+                    *,
+                    customers(name),
+                    purchases:purchases!sales_order_id(cost_per_unit, quantity)
+                `, { count: 'exact' })
+                .eq('is_direct_drop', true)
+                .order('created_at', { ascending: false })
+                .range(from, to);
+
+            if (error) throw error;
+            return { items: data || [], count: count || 0 };
+        },
+    });
+}
+
 export function useDirectDeliveries(enabled = true) {
     return useQuery({
         queryKey: ['direct-deliveries'],
@@ -223,7 +277,8 @@ export function useDirectDeliveries(enabled = true) {
                     purchases:purchases!sales_order_id(cost_per_unit, quantity)
                 `)
                 .eq('is_direct_drop', true)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(100); // Safety limit
 
             if (error) throw error;
             return data;

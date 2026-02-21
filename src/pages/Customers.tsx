@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/table";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { useCustomers, useAddCustomer, useToggleCustomerBlock, useUpdateCustomer, Customer } from "@/hooks/useCustomers";
-import { useOrders } from "@/hooks/useOrders";
+import { supabase } from "@/integrations/supabase/client";
 import { usePayments } from "@/hooks/useFinance";
 import { Plus, Users, AlertCircle, TrendingUp, Banknote, Ban, Check, FileText, Pencil } from "lucide-react";
 import { format } from "date-fns";
@@ -42,7 +42,6 @@ import { generateStatementOfAccount, printDocument, StatementData } from "@/lib/
 
 export default function Customers() {
   const { data: customers = [], isLoading } = useCustomers();
-  const { data: orders = [] } = useOrders();
   const { data: payments = [] } = usePayments();
   const addCustomer = useAddCustomer();
   const updateCustomer = useUpdateCustomer();
@@ -128,64 +127,77 @@ export default function Customers() {
     }).format(amount);
   };
 
-  const handleGenerateStatement = (customerId: string) => {
+  const handleGenerateStatement = async (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     if (!customer) return;
 
-    const customerOrders = orders.filter(o => o.customer_id === customerId);
-    const customerPayments = payments.filter(p => p.customer_id === customerId);
+    try {
+      // Fetch customer orders on-demand instead of loading all orders on mount
+      const { data: customerOrdersData, error: ordersError } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("customer_id", customerId);
 
-    const transactions: StatementData['transactions'] = [];
-    let runningBalance = 0;
+      if (ordersError) throw ordersError;
 
-    const allTransactions = [
-      ...customerOrders.map(o => ({
-        date: new Date(o.created_at),
-        type: 'debit' as const,
-        description: `Order ${o.order_number || o.id.slice(0, 8)} - ${o.quantity}T ${o.cement_type}`,
-        amount: o.total_amount || 0,
-      })),
-      ...customerPayments.map(p => ({
-        date: new Date(p.payment_date),
-        type: 'credit' as const,
-        description: `Payment - ${p.payment_method}${p.reference_number ? ` (Ref: ${p.reference_number})` : ''}`,
-        amount: p.amount,
-      })),
-    ].sort((a, b) => a.date.getTime() - b.date.getTime());
+      const customerOrders = customerOrdersData || [];
+      const customerPayments = payments.filter(p => p.customer_id === customerId);
 
-    for (const t of allTransactions) {
-      if (t.type === 'debit') {
-        runningBalance += t.amount;
-        transactions.push({
-          date: format(t.date, 'MMM d, yyyy'),
-          description: t.description,
-          debit: t.amount,
-          credit: 0,
-          balance: runningBalance,
-        });
-      } else {
-        runningBalance -= t.amount;
-        transactions.push({
-          date: format(t.date, 'MMM d, yyyy'),
-          description: t.description,
-          debit: 0,
-          credit: t.amount,
-          balance: runningBalance,
-        });
+      const transactions: StatementData['transactions'] = [];
+      let runningBalance = 0;
+
+      const allTransactions = [
+        ...customerOrders.map(o => ({
+          date: new Date(o.created_at),
+          type: 'debit' as const,
+          description: `Order ${o.order_number || o.id.slice(0, 8)} - ${o.quantity}T ${o.cement_type}`,
+          amount: o.total_amount || 0,
+        })),
+        ...customerPayments.map(p => ({
+          date: new Date(p.payment_date),
+          type: 'credit' as const,
+          description: `Payment - ${p.payment_method}${p.reference_number ? ` (Ref: ${p.reference_number})` : ''}`,
+          amount: p.amount,
+        })),
+      ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+      for (const t of allTransactions) {
+        if (t.type === 'debit') {
+          runningBalance += t.amount;
+          transactions.push({
+            date: format(t.date, 'MMM d, yyyy'),
+            description: t.description,
+            debit: t.amount,
+            credit: 0,
+            balance: runningBalance,
+          });
+        } else {
+          runningBalance -= t.amount;
+          transactions.push({
+            date: format(t.date, 'MMM d, yyyy'),
+            description: t.description,
+            debit: 0,
+            credit: t.amount,
+            balance: runningBalance,
+          });
+        }
       }
+
+      const statementData: StatementData = {
+        customerName: customer.name,
+        customerAddress: customer.address || "",
+        customerPhone: customer.phone || "",
+        creditLimit: customer.credit_limit,
+        currentBalance: customer.current_balance,
+        transactions,
+        generatedDate: format(new Date(), 'PPP'),
+      };
+
+      printDocument(generateStatementOfAccount(statementData));
+    } catch (error) {
+      console.error("Error generating statement:", error);
+      alert("Failed to generate statement. Please try again.");
     }
-
-    const statementData: StatementData = {
-      customerName: customer.name,
-      customerAddress: customer.address || "",
-      customerPhone: customer.phone || "",
-      creditLimit: customer.credit_limit,
-      currentBalance: customer.current_balance,
-      transactions,
-      generatedDate: format(new Date(), 'PPP'),
-    };
-
-    printDocument(generateStatementOfAccount(statementData));
   };
 
   return (
