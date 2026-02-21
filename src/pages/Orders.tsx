@@ -44,7 +44,7 @@ import { useDepots, useProducts } from "@/hooks/useProductCatalog";
 import { useTrucks, useDrivers } from "@/hooks/useFleet";
 import { useSuppliers } from "@/hooks/usePurchases";
 import { useDocuments } from "@/hooks/useDocuments";
-import { useTripProfitability } from "@/hooks/useFinance";
+
 import { useReconciliation } from "@/hooks/useReconciliation";
 import { Plus, Package, ArrowRight, AlertCircle, FileText, Upload, MoreVertical, Printer, Edit, Trash2, UserPlus, Copy, Check } from "lucide-react";
 import { format, isPast } from "date-fns";
@@ -66,22 +66,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 const statusPipeline: OrderStatus[] = ["requested", "dispatched", "delivered"];
 
-function TripProfit({ orderId }: { orderId: string }) {
-  const { data } = useTripProfitability(orderId);
-  if (!data) return null;
-
-  const profitColor = data.profit >= 0 ? "text-success" : "text-destructive";
-
-  return (
-    <div className="text-xs space-y-1">
-      <div>Revenue: ₦{data.revenue.toLocaleString()}</div>
-      <div>Expenses: ₦{data.expenses.toLocaleString()}</div>
-      <div className={`font-semibold ${profitColor}`}>
-        Profit: ₦{data.profit.toLocaleString()}
-      </div>
-    </div>
-  );
-}
 
 export default function Orders() {
   const location = useLocation();
@@ -497,7 +481,6 @@ export default function Orders() {
                     <div><p className="text-muted-foreground">Margin</p><p className="font-bold">{selectedOrderData.cement_margin_percent}%</p></div>
                   </div>
                 )}
-                <div className="border-t pt-2 mt-4"><TripProfit orderId={selectedOrderData.id} /></div>
               </div>
             )}
           </DialogContent>
