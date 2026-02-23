@@ -86,7 +86,7 @@ export function generateLoadingManifest(data: LoadingManifestData): string {
 
   <div class="signature">
     <div class="signature-box">
-      <div class="signature-line">Dispatcher Signature</div>
+      <div class="signature-line">Authorized Signature</div>
     </div>
     <div class="signature-box">
       <div class="signature-line">Driver Signature</div>

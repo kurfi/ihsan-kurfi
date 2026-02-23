@@ -98,7 +98,6 @@ export default function Orders() {
   const reassignFleet = useReassignFleet();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [userRole, setUserRole] = useState<"dispatcher" | "accountant" | "manager">("dispatcher");
 
   useEffect(() => {
     if (location.state?.openNewOrder) {
@@ -356,27 +355,40 @@ export default function Orders() {
           </CardContent>
         </Card>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h2 className="heading-section">All Orders</h2>
-            <div className="flex items-center gap-2 bg-muted p-1 rounded-md text-xs">
-              <Button size="sm" variant={userRole === 'dispatcher' ? 'secondary' : 'ghost'} onClick={() => setUserRole('dispatcher')}>Dispatcher</Button>
-              <Button size="sm" variant={userRole === 'accountant' ? 'secondary' : 'ghost'} onClick={() => setUserRole('accountant')}>Accountant</Button>
-            </div>
-          </div>
-          <div className="flex gap-2">
-
-            <Button className="gradient-primary" onClick={() => setDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" /> New Order
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="heading-section">All Orders</h2>
+          <Button className="gradient-primary" onClick={() => setDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> New Order
+          </Button>
         </div>
 
         {/* Create Order Dialog */}
         <OrderForm open={dialogOpen} onOpenChange={setDialogOpen} />
 
         {isLoading ? (
-          <LoadingSkeleton variant="table" rows={5} />
+          <div className="grid grid-cols-1 md:hidden gap-4">
+            {[...Array(3)].map((_, i) => (
+              <LoadingSkeleton key={i} variant="card" />
+            ))}
+          </div>
+        ) : orders.length > 0 && (
+          <div className="grid grid-cols-1 md:hidden gap-4">
+            {orders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                onAction={handleOrderAction}
+                statusColors={statusColors}
+                formatStatus={formatStatus}
+              />
+            ))}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="hidden md:block">
+            <LoadingSkeleton variant="table" rows={5} />
+          </div>
         ) : orders.length === 0 ? (
           <EmptyState icon={Package} title="No orders yet" description="Create your first order to get started" />
         ) : (

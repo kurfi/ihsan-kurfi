@@ -28,8 +28,8 @@ export function OrderPipeline({ orderCounts }: OrderPipelineProps) {
                     Order Pipeline
                 </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between overflow-x-auto pb-4 scrollbar-thin">
+            <CardContent className="p-3 sm:p-6">
+                <div className="flex items-center justify-between overflow-x-auto pb-2 sm:pb-4 scrollbar-thin">
                     {statusPipeline.map((status, index) => {
                         const count = orderCounts[status] || 0;
                         return (

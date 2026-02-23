@@ -44,23 +44,6 @@ import { ExpenseCard } from "@/components/finance/ExpenseCard";
 import { HaulagePaymentDialog } from "@/components/orders/HaulagePaymentDialog";
 
 export default function Finance() {
-  const { data: payments = [], isLoading: loadingPayments } = usePayments();
-  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
-  const { data: customers = [] } = useCustomers();
-  const { data: orders = [], isLoading: loadingOrders } = useOrders(expenseDialogOpen);
-  const { data: paymentAccounts = [], isLoading: loadingAccounts } = usePaymentAccounts();
-
-  const addPayment = useAddPayment();
-  const updatePayment = useUpdatePayment();
-  const deletePayment = useDeletePayment();
-  const addExpense = useAddExpense();
-  const updateExpense = useUpdateExpense();
-  const deleteExpense = useDeleteExpense();
-  const addAccount = useAddPaymentAccount();
-  const updateAccount = useUpdatePaymentAccount();
-  const deleteAccount = useDeletePaymentAccount();
-  const confirmPayment = useConfirmPayment();
-
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [editPaymentDialogOpen, setEditPaymentDialogOpen] = useState(false);
   const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
@@ -82,8 +65,6 @@ export default function Finance() {
     payment_account_id: "",
   });
 
-  const { data: unsettledOrders = [] } = useOrderBalances(paymentForm.customer_id);
-
   const [expenseForm, setExpenseForm] = useState({
     order_id: "",
     expense_type: "fuel",
@@ -97,6 +78,26 @@ export default function Finance() {
     account_name: "",
     is_active: true
   });
+
+  const { data: payments = [], isLoading: loadingPayments } = usePayments();
+  const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
+  const { data: customers = [] } = useCustomers();
+  const { data: orders = [], isLoading: loadingOrders } = useOrders(expenseDialogOpen);
+  const { data: paymentAccounts = [], isLoading: loadingAccounts } = usePaymentAccounts();
+
+  const addPayment = useAddPayment();
+  const updatePayment = useUpdatePayment();
+  const deletePayment = useDeletePayment();
+  const addExpense = useAddExpense();
+  const updateExpense = useUpdateExpense();
+  const deleteExpense = useDeleteExpense();
+  const addAccount = useAddPaymentAccount();
+  const updateAccount = useUpdatePaymentAccount();
+  const deleteAccount = useDeletePaymentAccount();
+  const confirmPayment = useConfirmPayment();
+
+  const { data: unsettledOrders = [] } = useOrderBalances(paymentForm.customer_id);
+
 
   const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
