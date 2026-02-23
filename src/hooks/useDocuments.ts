@@ -92,6 +92,31 @@ export function useAddDocument() {
   });
 }
 
+export function useUpdateDocument() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...doc }: Partial<Document> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("documents")
+        .update(doc)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast({ title: "Document updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Failed to update document", description: error.message, variant: "destructive" });
+    },
+  });
+}
+
 export function useExpiringDocuments(daysThreshold = 30) {
   const { data: documents, ...rest } = useDocuments();
 

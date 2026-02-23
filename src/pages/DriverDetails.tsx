@@ -9,15 +9,60 @@ import { ArrowLeft, User, Phone, Mail, Award, AlertTriangle, FileText, Truck } f
 import { DriverWallet } from "@/components/fleet/DriverWallet";
 import { format, differenceInDays } from "date-fns";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
-import { useDocuments } from "@/hooks/useDocuments";
+import { useDocuments, useUpdateDocument } from "@/hooks/useDocuments";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { useState } from "react";
 
 export default function DriverDetails() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { data: drivers = [], isLoading } = useDrivers();
     const { data: documents = [] } = useDocuments();
+    const updateDocument = useUpdateDocument();
+
+    const [renewDialogOpen, setRenewDialogOpen] = useState(false);
+    const [selectedDoc, setSelectedDoc] = useState<any>(null);
+    const [docForm, setDocForm] = useState({
+        document_number: "",
+        issue_date: "",
+        expiry_date: "",
+    });
 
     const driver = drivers.find(d => d.id === id);
+
+    const handleOpenRenew = (doc: any) => {
+        setSelectedDoc(doc);
+        setDocForm({
+            document_number: doc.document_number || "",
+            issue_date: doc.issue_date || "",
+            expiry_date: "",
+        });
+        setRenewDialogOpen(true);
+    };
+
+    const handleRenew = () => {
+        if (!selectedDoc || !docForm.expiry_date) return;
+        updateDocument.mutate({
+            id: selectedDoc.id,
+            document_number: docForm.document_number,
+            issue_date: docForm.issue_date || null,
+            expiry_date: docForm.expiry_date,
+        }, {
+            onSuccess: () => {
+                setRenewDialogOpen(false);
+                setSelectedDoc(null);
+            }
+        });
+    };
 
     if (isLoading) {
         return (
@@ -104,7 +149,7 @@ export default function DriverDetails() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className={`text-2xl font-bold ${successRate && successRate >= 90 ? "text-success" :
-                                            successRate && successRate >= 70 ? "text-warning" : "text-muted-foreground"
+                                        successRate && successRate >= 70 ? "text-warning" : "text-muted-foreground"
                                         }`}>
                                         {successRate !== null ? `${successRate}%` : "N/A"}
                                     </div>
@@ -185,9 +230,14 @@ export default function DriverDetails() {
                                                             <div className={`w-2 h-2 rounded-full ${isExpired ? "bg-destructive" : isExpiring ? "bg-warning" : "bg-success"}`} />
                                                             <span className="capitalize">{doc.document_type.replace(/_/g, " ")}</span>
                                                         </div>
-                                                        <span className={isExpired ? "text-destructive font-medium" : isExpiring ? "text-warning font-medium" : "text-muted-foreground"}>
-                                                            {isExpired ? "Expired" : `${days} days left`}
-                                                        </span>
+                                                        <div className="flex items-center gap-4">
+                                                            <span className={isExpired ? "text-destructive font-medium" : isExpiring ? "text-warning font-medium" : "text-muted-foreground"}>
+                                                                {isExpired ? "Expired" : `${days} days left`}
+                                                            </span>
+                                                            <Button variant="ghost" size="sm" onClick={() => handleOpenRenew(doc)}>
+                                                                Renew
+                                                            </Button>
+                                                        </div>
                                                     </div>
                                                 )
                                             })}
@@ -196,6 +246,50 @@ export default function DriverDetails() {
                                 </CardContent>
                             </Card>
                         </div>
+
+                        <Dialog open={renewDialogOpen} onOpenChange={setRenewDialogOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Renew {selectedDoc && selectedDoc.document_type.replace(/_/g, " ")}</DialogTitle>
+                                    <DialogDescription>Update document details for {driver.name}.</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label>Document Number</Label>
+                                        <Input
+                                            value={docForm.document_number}
+                                            onChange={(e) => setDocForm({ ...docForm, document_number: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Issue Date</Label>
+                                            <Input
+                                                type="date"
+                                                value={docForm.issue_date}
+                                                onChange={(e) => setDocForm({ ...docForm, issue_date: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Expiry Date *</Label>
+                                            <Input
+                                                type="date"
+                                                value={docForm.expiry_date}
+                                                onChange={(e) => setDocForm({ ...docForm, expiry_date: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <LoadingButton
+                                        onClick={handleRenew}
+                                        className="w-full"
+                                        disabled={!docForm.expiry_date}
+                                        isLoading={updateDocument.isPending}
+                                    >
+                                        Save Renewal
+                                    </LoadingButton>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </TabsContent>
 
                     <TabsContent value="wallet">

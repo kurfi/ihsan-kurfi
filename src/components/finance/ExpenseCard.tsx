@@ -7,16 +7,18 @@ import { format } from "date-fns";
 
 interface Expense {
     id: string;
-    expense_type: "fuel" | "toll" | "driver_allowance" | "maintenance" | "loading_fee" | "other";
+    category?: string | null;
+    expense_type: string;
     amount: number;
     description?: string | null;
     created_at: string;
     order?: { order_number: string } | null;
+    truck?: { plate_number: string } | null;
 }
 
 interface ExpenseCardProps {
-    expense: Expense;
-    onEdit: (expense: Expense) => void;
+    expense: any; // Using any for simplicity in prop passing from Finance.tsx
+    onEdit: (expense: any) => void;
     onDelete: (id: string) => void;
     formatCurrency: (amount: number) => string;
 }
@@ -28,7 +30,7 @@ export function ExpenseCard({ expense, onEdit, onDelete, formatCurrency }: Expen
                 <div className="flex justify-between items-start">
                     <div className="space-y-1">
                         <h4 className="font-semibold text-foreground capitalize flex items-center gap-2">
-                            {expense.expense_type.replace('_', ' ')}
+                            {(expense.category || expense.expense_type).replace('_', ' ')}
                         </h4>
                         <div className="text-sm text-muted-foreground flex items-center gap-2">
                             <Calendar className="w-3.5 h-3.5" />
@@ -40,12 +42,18 @@ export function ExpenseCard({ expense, onEdit, onDelete, formatCurrency }: Expen
                     </div>
                 </div>
 
-                {(expense.description || expense.order) && (
+                {(expense.description || expense.order || expense.truck) && (
                     <div className="pt-2 border-t border-border/50 space-y-2 text-sm">
                         {expense.order && (
                             <div className="flex items-center gap-2 text-muted-foreground bg-secondary/30 p-1.5 rounded-md w-fit">
                                 <ShoppingCart className="w-3.5 h-3.5" />
                                 <span className="text-xs">Order #{expense.order.order_number}</span>
+                            </div>
+                        )}
+                        {expense.truck && (
+                            <div className="flex items-center gap-2 text-muted-foreground bg-blue-50 p-1.5 rounded-md w-fit">
+                                <FileText className="w-3.5 h-3.5 text-blue-600" />
+                                <span className="text-xs text-blue-700">Truck: {expense.truck.plate_number}</span>
                             </div>
                         )}
                         {expense.description && (

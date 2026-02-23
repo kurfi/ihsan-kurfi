@@ -34,7 +34,7 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTrucks, useDrivers, useAddTruck, useAddDriver, useUpdateTruck, useUpdateDriver, useDeleteTruck, useDeleteDriver } from "@/hooks/useFleet";
-import { useDocuments, useAddDocument } from "@/hooks/useDocuments";
+import { useDocuments, useAddDocument, useUpdateDocument } from "@/hooks/useDocuments";
 import { Truck, User, Plus, AlertTriangle, FileCheck, Calendar, FilePlus, Wrench, Gauge, Wallet, Pencil, Trash2, TrendingUp } from "lucide-react";
 import { format, differenceInDays, isPast } from "date-fns";
 import { Database } from "@/integrations/supabase/types";
@@ -69,6 +69,7 @@ export default function Fleet() {
   const deleteTruck = useDeleteTruck();
   const deleteDriver = useDeleteDriver();
   const addDocument = useAddDocument();
+  const updateDocument = useUpdateDocument();
   const navigate = useNavigate();
 
   const [truckForm, setTruckForm] = useState({
@@ -116,6 +117,11 @@ export default function Fleet() {
   const [editDriverDialogOpen, setEditDriverDialogOpen] = useState(false);
   const [editingTruckId, setEditingTruckId] = useState<string | null>(null);
   const [editingDriverId, setEditingDriverId] = useState<string | null>(null);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+
+  const formatDocType = (type: string) => {
+    return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
 
   const getDocumentStatus = (entityId: string, entityType: string) => {
     const entityDocs = documents.filter(
@@ -184,25 +190,73 @@ export default function Fleet() {
     });
   };
 
-  const handleAddDocument = () => {
+  const handleSaveDocument = () => {
     if (!docForm.document_type || !docForm.entity_type || !docForm.entity_id || !docForm.expiry_date) return;
 
-    addDocument.mutate({
-      document_type: docForm.document_type as DocumentType,
-      entity_type: docForm.entity_type,
-      entity_id: docForm.entity_id,
-      document_number: docForm.document_number || undefined,
-      issue_date: docForm.issue_date || undefined,
-      expiry_date: docForm.expiry_date,
-    }, {
-      onSuccess: () => {
-        setDocDialogOpen(false);
-        setDocForm({
-          document_type: "", entity_type: "", entity_id: "",
-          document_number: "", issue_date: "", expiry_date: "",
-        });
+    // Check if document of this type already exists for this entity (when adding new)
+    if (!editingDocId) {
+      const existingDoc = documents.find(d =>
+        d.entity_id === docForm.entity_id &&
+        d.document_type === docForm.document_type
+      );
+
+      if (existingDoc) {
+        if (confirm(`A document of type "${formatDocType(docForm.document_type)}" already exists for this entity. Would you like to renew it instead?`)) {
+          setEditingDocId(existingDoc.id);
+          // Keep the form values but now it will update instead of insert
+        } else {
+          return;
+        }
       }
+    }
+
+    if (editingDocId) {
+      updateDocument.mutate({
+        id: editingDocId,
+        document_number: docForm.document_number,
+        issue_date: docForm.issue_date || null,
+        expiry_date: docForm.expiry_date,
+      }, {
+        onSuccess: () => {
+          setDocDialogOpen(false);
+          setEditingDocId(null);
+          setDocForm({
+            document_type: "", entity_type: "", entity_id: "",
+            document_number: "", issue_date: "", expiry_date: "",
+          });
+        }
+      });
+    } else {
+      addDocument.mutate({
+        document_type: docForm.document_type as DocumentType,
+        entity_type: docForm.entity_type,
+        entity_id: docForm.entity_id,
+        document_number: docForm.document_number || undefined,
+        issue_date: docForm.issue_date || undefined,
+        expiry_date: docForm.expiry_date,
+      }, {
+        onSuccess: () => {
+          setDocDialogOpen(false);
+          setDocForm({
+            document_type: "", entity_type: "", entity_id: "",
+            document_number: "", issue_date: "", expiry_date: "",
+          });
+        }
+      });
+    }
+  };
+
+  const handleRenewDocument = (doc: any) => {
+    setEditingDocId(doc.id);
+    setDocForm({
+      document_type: doc.document_type,
+      entity_type: doc.entity_type,
+      entity_id: doc.entity_id,
+      document_number: doc.document_number || "",
+      issue_date: doc.issue_date || "",
+      expiry_date: "", // User must provide new expiry
     });
+    setDocDialogOpen(true);
   };
 
   const handleOpenEditTruck = (truck: typeof trucks[0]) => {
@@ -998,6 +1052,14 @@ export default function Fleet() {
                               <Calendar className="w-3 h-3" />
                               Expires: {format(new Date(doc.expiry_date), "MMM d, yyyy")}
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full mt-2"
+                              onClick={() => handleRenewDocument(doc)}
+                            >
+                              Renew Document
+                            </Button>
                           </CardContent>
                         </Card>
                       );
@@ -1044,6 +1106,15 @@ export default function Fleet() {
                                     {isExpired ? "EXPIRED" : `${days} days left`}
                                   </Badge>
                                 </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRenewDocument(doc)}
+                                  >
+                                    Renew
+                                  </Button>
+                                </TableCell>
                               </TableRow>
                             );
                           })}
@@ -1062,7 +1133,16 @@ export default function Fleet() {
                 <FileCheck className="w-5 h-5" />
                 All Documents
               </CardTitle>
-              <Dialog open={docDialogOpen} onOpenChange={setDocDialogOpen}>
+              <Dialog open={docDialogOpen} onOpenChange={(open) => {
+                setDocDialogOpen(open);
+                if (!open) {
+                  setEditingDocId(null);
+                  setDocForm({
+                    document_type: "", entity_type: "", entity_id: "",
+                    document_number: "", issue_date: "", expiry_date: "",
+                  });
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button className="gradient-primary size-sm mobile-compact">
                     <FilePlus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Add Document</span><span className="sm:hidden">Add</span>
@@ -1070,13 +1150,16 @@ export default function Fleet() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add New Document</DialogTitle>
-                    <DialogDescription>Upload or record a new compliance document.</DialogDescription>
+                    <DialogTitle>{editingDocId ? "Renew Document" : "Add New Document"}</DialogTitle>
+                    <DialogDescription>
+                      {editingDocId ? "Update registration and expiry for renewal." : "Upload or record a new compliance document."}
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
                       <Label>Document Type *</Label>
                       <Select
+                        disabled={!!editingDocId}
                         value={docForm.document_type}
                         onValueChange={(v: DocumentType) => setDocForm({ ...docForm, document_type: v })}
                       >
@@ -1111,6 +1194,7 @@ export default function Fleet() {
                       <div className="space-y-2">
                         <Label>{docForm.entity_type === "truck" ? "Truck" : "Driver"} *</Label>
                         <Select
+                          disabled={!!editingDocId}
                           value={docForm.entity_id}
                           onValueChange={(v) => setDocForm({ ...docForm, entity_id: v })}
                         >
@@ -1157,12 +1241,12 @@ export default function Fleet() {
                     </div>
 
                     <LoadingButton
-                      onClick={handleAddDocument}
+                      onClick={handleSaveDocument}
                       className="w-full"
                       disabled={!docForm.document_type || !docForm.entity_type || !docForm.entity_id || !docForm.expiry_date}
-                      isLoading={addDocument.isPending}
+                      isLoading={addDocument.isPending || updateDocument.isPending}
                     >
-                      Add Document
+                      {editingDocId ? "Renew Document" : "Add Document"}
                     </LoadingButton>
                   </div>
                 </DialogContent>
@@ -1212,6 +1296,14 @@ export default function Fleet() {
                                 {format(new Date(doc.expiry_date), "MMM d, yyyy")}
                               </div>
                             </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full mt-2"
+                              onClick={() => handleRenewDocument(doc)}
+                            >
+                              Renew Document
+                            </Button>
                           </CardContent>
                         </Card>
                       );
@@ -1258,6 +1350,15 @@ export default function Fleet() {
                                   } className={!isExpired && !isExpiring ? "bg-success text-success-foreground" : ""}>
                                     {isExpired ? "Expired" : isExpiring ? `${days} days` : "Valid"}
                                   </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRenewDocument(doc)}
+                                  >
+                                    Renew
+                                  </Button>
                                 </TableCell>
                               </TableRow>
                             );

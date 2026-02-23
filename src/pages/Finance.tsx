@@ -37,7 +37,8 @@ import {
 import { usePayments, useAddPayment, useExpenses, useAddExpense, useUpdatePayment, useDeletePayment, useUpdateExpense, useDeleteExpense, usePaymentAccounts, useAddPaymentAccount, useUpdatePaymentAccount, useDeletePaymentAccount, useOrderBalances, useConfirmPayment } from "@/hooks/useFinance";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useOrders } from "@/hooks/useOrders";
-import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle } from "lucide-react";
+import { useTrucks } from "@/hooks/useFleet";
+import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { PaymentCard } from "@/components/finance/PaymentCard";
 import { ExpenseCard } from "@/components/finance/ExpenseCard";
@@ -67,7 +68,9 @@ export default function Finance() {
 
   const [expenseForm, setExpenseForm] = useState({
     order_id: "",
-    expense_type: "fuel",
+    truck_id: "",
+    category: "other",
+    expense_type: "other",
     amount: "",
     description: "",
   });
@@ -83,6 +86,7 @@ export default function Finance() {
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
   const { data: customers = [] } = useCustomers();
   const { data: orders = [], isLoading: loadingOrders } = useOrders(expenseDialogOpen);
+  const { data: trucks = [] } = useTrucks();
   const { data: paymentAccounts = [], isLoading: loadingAccounts } = usePaymentAccounts();
 
   const addPayment = useAddPayment();
@@ -169,6 +173,8 @@ export default function Finance() {
   const handleAddExpense = () => {
     addExpense.mutate({
       order_id: expenseForm.order_id || null,
+      truck_id: expenseForm.truck_id || null,
+      category: expenseForm.category as any,
       expense_type: expenseForm.expense_type,
       amount: parseFloat(expenseForm.amount),
       description: expenseForm.description || null,
@@ -177,7 +183,9 @@ export default function Finance() {
         setExpenseDialogOpen(false);
         setExpenseForm({
           order_id: "",
-          expense_type: "fuel",
+          truck_id: "",
+          category: "other",
+          expense_type: "other",
           amount: "",
           description: "",
         });
@@ -240,7 +248,9 @@ export default function Finance() {
     setEditingExpenseId(expense.id);
     setExpenseForm({
       order_id: expense.order_id || "",
-      expense_type: expense.expense_type,
+      truck_id: expense.truck_id || "",
+      category: expense.category || "other",
+      expense_type: expense.expense_type || "other",
       amount: expense.amount.toString(),
       description: expense.description || "",
     });
@@ -252,6 +262,8 @@ export default function Finance() {
     updateExpense.mutate({
       id: editingExpenseId,
       order_id: expenseForm.order_id || null,
+      truck_id: expenseForm.truck_id || null,
+      category: expenseForm.category as any,
       expense_type: expenseForm.expense_type,
       amount: parseFloat(expenseForm.amount),
       description: expenseForm.description || null,
@@ -259,7 +271,14 @@ export default function Finance() {
       onSuccess: () => {
         setEditExpenseDialogOpen(false);
         setEditingExpenseId(null);
-        setExpenseForm({ order_id: "", expense_type: "fuel", amount: "", description: "" });
+        setExpenseForm({
+          order_id: "",
+          truck_id: "",
+          category: "other",
+          expense_type: "other",
+          amount: "",
+          description: "",
+        });
       }
     });
   };
@@ -670,34 +689,53 @@ export default function Finance() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label>Expense Type *</Label>
-                        <Select value={expenseForm.expense_type} onValueChange={(v) => setExpenseForm({ ...expenseForm, expense_type: v })}>
+                        <Label>Category *</Label>
+                        <Select value={expenseForm.category} onValueChange={(v) => setExpenseForm({ ...expenseForm, category: v, expense_type: v })}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="fuel">Fuel</SelectItem>
-                            <SelectItem value="toll">Toll Gate</SelectItem>
                             <SelectItem value="driver_allowance">Driver Allowance</SelectItem>
+                            <SelectItem value="toll">Toll Gate</SelectItem>
+                            <SelectItem value="salary">Salary</SelectItem>
                             <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="loading_fee">Loading Fee</SelectItem>
+                            <SelectItem value="office">Office</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Related Order (Optional)</Label>
-                        <Select value={expenseForm.order_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, order_id: v })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select order" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {orders.map((o) => (
-                              <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Related Order (Optional)</Label>
+                          <Select value={expenseForm.order_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, order_id: v })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select order" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="NONE">None</SelectItem>
+                              {orders.map((o) => (
+                                <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Related Truck (Optional)</Label>
+                          <Select value={expenseForm.truck_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, truck_id: v })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select truck" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="NONE">None</SelectItem>
+                              {trucks.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>{t.plate_number}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -773,10 +811,26 @@ export default function Finance() {
                                 <TableCell>{format(new Date(expense.created_at), "MMM d, yyyy")}</TableCell>
                                 <TableCell>
                                   <Badge variant="outline" className="capitalize">
-                                    {expense.expense_type.replace('_', ' ')}
+                                    {(expense.category || expense.expense_type).replace('_', ' ')}
                                   </Badge>
                                 </TableCell>
-                                <TableCell>{expense.order?.order_number || "-"}</TableCell>
+                                <TableCell>
+                                  <div className="text-xs">
+                                    {expense.order ? (
+                                      <div className="flex items-center gap-1">
+                                        <Receipt className="w-3 h-3 text-muted-foreground" />
+                                        {expense.order.order_number}
+                                      </div>
+                                    ) : expense.truck ? (
+                                      <div className="flex items-center gap-1">
+                                        <Truck className="w-3 h-3 text-muted-foreground" />
+                                        {expense.truck.plate_number}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground">-</span>
+                                    )}
+                                  </div>
+                                </TableCell>
                                 <TableCell className="text-muted-foreground">{expense.description || "-"}</TableCell>
                                 <TableCell className="text-right font-medium text-destructive">{formatCurrency(expense.amount)}</TableCell>
                                 <TableCell>

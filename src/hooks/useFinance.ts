@@ -15,6 +15,7 @@ export interface Expense {
   description: string | null;
   created_at: string;
   order?: { order_number: string } | null;
+  truck?: { plate_number: string } | null;
 }
 
 export interface PaymentAccount {
@@ -51,7 +52,8 @@ export function useExpenses(options?: { orderId?: string; truckId?: string }) {
         .from("expenses")
         .select(`
           *,
-          order:orders(order_number)
+          order:orders(order_number),
+          truck:trucks(plate_number)
         `)
         .order("created_at", { ascending: false });
 
