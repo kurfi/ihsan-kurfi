@@ -80,3 +80,11 @@ export function useTotalReceivables() {
     const total = receivables.reduce((sum, r) => sum + r.total_owed, 0);
     return { total, count: receivables.length };
 }
+
+// Helper function to calculate all-time totals
+export function useAllTimeTotals() {
+    const { data: monthlyPL = [] } = useMonthlyProfitLoss();
+    const totalRevenue = monthlyPL.reduce((sum, m) => sum + (m.total_revenue || 0), 0);
+    const totalProfit = monthlyPL.reduce((sum, m) => sum + (m.net_profit || 0), 0);
+    return { totalRevenue, totalProfit };
+}

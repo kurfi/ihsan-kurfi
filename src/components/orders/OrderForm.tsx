@@ -160,11 +160,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogTrigger asChild>
-                <Button className="gradient-primary">
-                    <Plus className="w-4 h-4 mr-2" /> New Order
-                </Button>
-            </DialogTrigger>
             <DialogContent className="max-w-lg">
                 <DialogHeader>
                     <DialogTitle>Create New Order</DialogTitle>

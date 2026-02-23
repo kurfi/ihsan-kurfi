@@ -14,7 +14,7 @@ import { motion } from "framer-motion";
 import { VibrantCard } from "@/components/ui/vibrant-card";
 import { useDualStreamProfitability } from "@/hooks/useReports";
 import { DualStreamCard } from "@/components/reports/DualStreamCard";
-import { useCurrentMonthPL, useTotalReceivables } from "@/hooks/useFinancialReports";
+import { useCurrentMonthPL, useTotalReceivables, useAllTimeTotals } from "@/hooks/useFinancialReports";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -24,6 +24,7 @@ export default function Dashboard() {
   const { data: dualStreamData = [] } = useDualStreamProfitability();
   const currentMonthPL = useCurrentMonthPL();
   const { total: totalReceivables } = useTotalReceivables();
+  const { totalRevenue: allTimeRevenue, totalProfit: allTimeProfit } = useAllTimeTotals();
 
   const { data: metrics, isLoading: metricsLoading } = useDashboardOrderMetrics();
   const ordersTodayCount = metrics?.ordersToday || 0;
@@ -68,7 +69,7 @@ export default function Dashboard() {
         {isLoading ? (
           <LoadingSkeleton variant="metric" />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <MetricCard
               title="Haulage Revenue (MTD)"
               value={`₦${(haulageRevenue / 1000).toFixed(1)}k`}
@@ -91,8 +92,23 @@ export default function Dashboard() {
               subtitle="Net earnings"
               icon={TrendingUp}
               variant="warning"
-              trend={{ value: 10, positive: true }}
               delay={0.3}
+            />
+            <MetricCard
+              title="Total Revenue (All-Time)"
+              value={`₦${(allTimeRevenue / 1000000).toFixed(2)}M`}
+              subtitle="Cumulative turnover"
+              icon={Banknote}
+              variant="default"
+              delay={0.4}
+            />
+            <MetricCard
+              title="Total Profit (All-Time)"
+              value={`₦${(allTimeProfit / 1000).toFixed(1)}k`}
+              subtitle="Lifetime earnings"
+              icon={TrendingUp}
+              variant="success"
+              delay={0.5}
             />
             <MetricCard
               title="Receivables"
@@ -100,7 +116,7 @@ export default function Dashboard() {
               subtitle="Outstanding payments"
               icon={Wallet}
               variant="destructive"
-              delay={0.4}
+              delay={0.6}
             />
           </div>
         )}

@@ -216,8 +216,18 @@ export function useDailyCashPosition(date?: Date, enabled = true) {
 
             if (expensesError) throw expensesError;
 
+            // Get cement payments for the day
+            const { data: cementPayments, error: cementError } = await (supabase
+                .from('cement_payments_to_dangote' as any) as any)
+                .select('amount_paid')
+                .gte('payment_date', startOfDay.toISOString().split('T')[0])
+                .lte('payment_date', endOfDay.toISOString().split('T')[0]);
+
+            if (cementError) throw cementError;
+
             const totalIncome = (payments || []).reduce((sum, p) => sum + p.amount, 0);
-            const totalExpenses = (expenses || []).reduce((sum, e) => sum + e.amount, 0);
+            const totalCementPayments = (cementPayments || []).reduce((sum, p: any) => sum + p.amount_paid, 0);
+            const totalExpenses = (expenses || []).reduce((sum, e) => sum + e.amount, 0) + totalCementPayments;
 
             const byMethod = (payments || []).reduce((acc, p) => {
                 const method = p.payment_method;
