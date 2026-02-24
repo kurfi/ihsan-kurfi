@@ -38,7 +38,7 @@ import { usePayments, useAddPayment, useExpenses, useAddExpense, useUpdatePaymen
 import { useCustomers } from "@/hooks/useCustomers";
 import { useOrders } from "@/hooks/useOrders";
 import { useTrucks } from "@/hooks/useFleet";
-import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck } from "lucide-react";
+import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck, Eye } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { PaymentCard } from "@/components/finance/PaymentCard";
 import { ExpenseCard } from "@/components/finance/ExpenseCard";
@@ -81,6 +81,9 @@ export default function Finance() {
     account_name: "",
     is_active: true
   });
+
+  const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
+  const [viewingAccountId, setViewingAccountId] = useState<string | null>(null);
 
   const { data: payments = [], isLoading: loadingPayments } = usePayments();
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
@@ -321,7 +324,20 @@ export default function Finance() {
     deleteAccount.mutate(id);
   };
 
+  const handleOpenLedger = (id: string) => {
+    setViewingAccountId(id);
+    setLedgerDialogOpen(true);
+  };
+
   const activeAccounts = paymentAccounts.filter(a => a.is_active);
+
+  const getAccountPayments = (accountId: string) => {
+    return payments.filter(p => p.payment_account_id === accountId && p.status === 'Confirmed');
+  };
+
+  const getAccountTotal = (accountId: string) => {
+    return getAccountPayments(accountId).reduce((sum, p) => sum + p.amount, 0);
+  };
 
   return (
     <MainLayout title="Finance & Payments">
@@ -940,6 +956,7 @@ export default function Finance() {
                           <TableHead>Bank Name</TableHead>
                           <TableHead>Account Number</TableHead>
                           <TableHead>Account Name</TableHead>
+                          <TableHead>Total Received</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -950,6 +967,7 @@ export default function Finance() {
                             <TableCell className="font-medium">{account.bank_name}</TableCell>
                             <TableCell>{account.account_number}</TableCell>
                             <TableCell>{account.account_name}</TableCell>
+                            <TableCell className="font-bold text-success">{formatCurrency(getAccountTotal(account.id))}</TableCell>
                             <TableCell>
                               <Badge variant={account.is_active ? "default" : "secondary"}>
                                 {account.is_active ? "Active" : "Inactive"}
@@ -957,6 +975,14 @@ export default function Finance() {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenLedger(account.id)}
+                                  aria-label="View Ledger"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
                                 <Button
                                   size="sm"
                                   variant="outline"
@@ -1208,6 +1234,71 @@ export default function Finance() {
             >
               Save Changes
             </LoadingButton>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Account Ledger Dialog */}
+      <Dialog open={ledgerDialogOpen} onOpenChange={(open) => {
+        setLedgerDialogOpen(open);
+        if (!open) setViewingAccountId(null);
+      }}>
+        <DialogContent className="max-w-4xl w-11/12 max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Landmark className="w-5 h-5 text-primary" />
+              Account Ledger
+            </DialogTitle>
+            <DialogDescription>
+              {viewingAccountId ? (() => {
+                const acc = paymentAccounts.find(a => a.id === viewingAccountId);
+                return acc ? `${acc.bank_name} — ${acc.account_number} (${acc.account_name})` : "Account Ledger";
+              })() : "Account Ledger"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2">
+            {viewingAccountId && (
+              <div className="mb-4 p-4 bg-success/10 rounded-lg inline-block">
+                <p className="text-sm text-success font-medium">Total Received</p>
+                <p className="text-2xl font-bold text-success">{formatCurrency(getAccountTotal(viewingAccountId))}</p>
+                <p className="text-xs text-muted-foreground mt-1">{getAccountPayments(viewingAccountId).length} confirmed payment(s)</p>
+              </div>
+            )}
+
+            {viewingAccountId && getAccountPayments(viewingAccountId).length > 0 ? (
+              <ResponsiveTable>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Order</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Reference</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getAccountPayments(viewingAccountId).map(payment => (
+                      <TableRow key={payment.id}>
+                        <TableCell>{format(new Date(payment.payment_date || payment.created_at), "MMM d, yyyy")}</TableCell>
+                        <TableCell className="font-medium">{payment.customer?.name || "—"}</TableCell>
+                        <TableCell>{payment.order?.order_number || "—"}</TableCell>
+                        <TableCell className="capitalize">{payment.payment_method}</TableCell>
+                        <TableCell className="text-muted-foreground">{payment.reference_number || "—"}</TableCell>
+                        <TableCell className="text-right font-bold text-success">{formatCurrency(payment.amount)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ResponsiveTable>
+            ) : (
+              <div className="text-center py-10">
+                <Receipt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No confirmed payments have been received into this account.</p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
