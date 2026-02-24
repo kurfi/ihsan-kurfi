@@ -366,10 +366,6 @@ export default function Fleet() {
     deleteDriver.mutate(id);
   };
 
-  const formatDocType = (type: string) => {
-    return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-  };
-
   const expiringDocs = documents.filter((doc) => {
     const days = differenceInDays(new Date(doc.expiry_date), new Date());
     return days <= 30 || isPast(new Date(doc.expiry_date));
