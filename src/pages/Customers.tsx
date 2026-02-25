@@ -36,7 +36,7 @@ import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { useCustomers, useAddCustomer, useToggleCustomerBlock, useUpdateCustomer, Customer } from "@/hooks/useCustomers";
 import { supabase } from "@/integrations/supabase/client";
 import { usePayments } from "@/hooks/useFinance";
-import { Plus, Users, AlertCircle, TrendingUp, Banknote, Ban, Check, FileText, Pencil } from "lucide-react";
+import { Plus, Users, AlertCircle, TrendingUp, Banknote, Ban, Check, FileText, Pencil, Search } from "lucide-react";
 import { format } from "date-fns";
 import { generateStatementOfAccount, printDocument, StatementData } from "@/lib/documentGenerator";
 
@@ -49,6 +49,8 @@ export default function Customers() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [editingCustomer, setEditingCustomer] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
@@ -117,6 +119,27 @@ export default function Customers() {
   const totalCreditLimit = customers.reduce((sum, c) => sum + c.credit_limit, 0);
   const totalBalance = customers.reduce((sum, c) => sum + c.current_balance, 0);
   const customersNearLimit = customers.filter(c => c.current_balance >= c.credit_limit * 0.8).length;
+
+  const filteredCustomers = customers.filter((c) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.phone || "").toLowerCase().includes(q) ||
+      (c.address || "").toLowerCase().includes(q) ||
+      (c.category || "").toLowerCase().includes(q)
+    );
+  }).sort((a, b) => {
+    if (sortBy === "name_asc") {
+      return a.name.localeCompare(b.name);
+    } else if (sortBy === "name_desc") {
+      return b.name.localeCompare(a.name);
+    } else if (sortBy === "newest") {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    } else if (sortBy === "oldest") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    }
+    return 0;
+  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -262,102 +285,124 @@ export default function Customers() {
         </div>
 
         <Card className="shadow-card mt-6">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="heading-section">All Customers</CardTitle>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gradient-primary">
-                  <Plus className="w-4 h-4 mr-2" /> Add Customer
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Customer</DialogTitle>
-                  <DialogDescription>Create a new customer profile to track orders and balances.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Company Name *</Label>
-                    <Input
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Company Ltd"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  className="pl-9 w-full sm:w-64"
+                  placeholder="Search customers…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                  <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                </SelectContent>
+              </Select>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gradient-primary">
+                    <Plus className="w-4 h-4 mr-2" /> Add Customer
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Customer</DialogTitle>
+                    <DialogDescription>Create a new customer profile to track orders and balances.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label>Email</Label>
+                      <Label>Company Name *</Label>
                       <Input
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => setForm({ ...form, email: e.target.value })}
-                        placeholder="info@company.com"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        placeholder="Company Ltd"
                       />
                     </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={form.email}
+                          onChange={(e) => setForm({ ...form, email: e.target.value })}
+                          placeholder="info@company.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input
+                          value={form.phone}
+                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                          placeholder="+234..."
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label>Phone</Label>
+                      <Label>Address</Label>
                       <Input
-                        value={form.phone}
-                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                        placeholder="+234..."
+                        value={form.address}
+                        onChange={(e) => setForm({ ...form, address: e.target.value })}
+                        placeholder="Business address"
                       />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Address</Label>
-                    <Input
-                      value={form.address}
-                      onChange={(e) => setForm({ ...form, address: e.target.value })}
-                      placeholder="Business address"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Category *</Label>
-                      <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="wholesaler">Wholesaler</SelectItem>
-                          <SelectItem value="retailer">Retailer</SelectItem>
-                          <SelectItem value="block_industry">Block Industry</SelectItem>
-                          <SelectItem value="walk_in">Walk-in</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Category *</Label>
+                        <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="wholesaler">Wholesaler</SelectItem>
+                            <SelectItem value="retailer">Retailer</SelectItem>
+                            <SelectItem value="block_industry">Block Industry</SelectItem>
+                            <SelectItem value="walk_in">Walk-in</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Credit Limit (₦)</Label>
-                      <Input
-                        type="number"
-                        value={form.credit_limit}
-                        onChange={(e) => setForm({ ...form, credit_limit: e.target.value })}
-                        placeholder="5000000"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Credit Limit (₦)</Label>
+                        <Input
+                          type="number"
+                          value={form.credit_limit}
+                          onChange={(e) => setForm({ ...form, credit_limit: e.target.value })}
+                          placeholder="5000000"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Current Balance (₦)</Label>
+                        <Input
+                          type="number"
+                          value={form.current_balance}
+                          onChange={(e) => setForm({ ...form, current_balance: e.target.value })}
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Current Balance (₦)</Label>
-                      <Input
-                        type="number"
-                        value={form.current_balance}
-                        onChange={(e) => setForm({ ...form, current_balance: e.target.value })}
-                        placeholder="0"
-                      />
-                    </div>
+                    <LoadingButton
+                      onClick={handleAddCustomer}
+                      className="w-full"
+                      disabled={!form.name || !form.credit_limit}
+                      isLoading={addCustomer.isPending}
+                    >
+                      Add Customer
+                    </LoadingButton>
                   </div>
-                  <LoadingButton
-                    onClick={handleAddCustomer}
-                    className="w-full"
-                    disabled={!form.name || !form.credit_limit}
-                    isLoading={addCustomer.isPending}
-                  >
-                    Add Customer
-                  </LoadingButton>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -365,7 +410,10 @@ export default function Customers() {
             ) : (
               <>
                 <div className="md:hidden grid gap-4 p-4">
-                  {customers.map((customer) => {
+                  {filteredCustomers.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">No customers match your search.</p>
+                  ) : null}
+                  {filteredCustomers.map((customer) => {
                     const usagePercent = customer.credit_limit > 0
                       ? (customer.current_balance / customer.credit_limit) * 100
                       : 0;
@@ -461,7 +509,13 @@ export default function Customers() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {customers.map((customer) => {
+                        {filteredCustomers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                              No customers match your search.
+                            </TableCell>
+                          </TableRow>
+                        ) : filteredCustomers.map((customer) => {
                           const usagePercent = customer.credit_limit > 0
                             ? (customer.current_balance / customer.credit_limit) * 100
                             : 0;

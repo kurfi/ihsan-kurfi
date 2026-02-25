@@ -439,7 +439,7 @@ export function useConfirmPayment() {
   });
 }
 
-export function usePaginatedOrders(page: number, limit: number, enabled = true) {
+export function usePaginatedOrders(page: number, limit: number, searchQuery: string = "", enabled = true) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -462,13 +462,13 @@ export function usePaginatedOrders(page: number, limit: number, enabled = true) 
   }, [queryClient, enabled]);
 
   return useQuery({
-    queryKey: ["orders", "paginated", page, limit],
+    queryKey: ["orders", "paginated", page, limit, searchQuery],
     enabled,
     queryFn: async () => {
       const from = (page - 1) * limit;
       const to = from + limit - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from("orders")
         .select(`
           *,
@@ -477,7 +477,13 @@ export function usePaginatedOrders(page: number, limit: number, enabled = true) 
           truck:trucks(plate_number, capacity_tons),
           driver:drivers(name, phone),
           purchases:purchases!sales_order_id(atc_number, cap_number)
-        `, { count: "exact" })
+        `, { count: "exact" });
+
+      if (searchQuery) {
+        query = query.or(`order_number.ilike.%${searchQuery}%,waybill_number.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .range(from, to);
 

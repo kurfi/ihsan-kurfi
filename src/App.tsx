@@ -20,13 +20,13 @@ const DriverDetails = lazy(() => import("./pages/DriverDetails"));
 const CementPayments = lazy(() => import("./pages/CementPayments"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Configure caching: data stays fresh for 30s, cached for 5 minutes
+// Configure caching: data stays fresh for 5 minutes, cached for 15 minutes
 // This prevents re-fetching all data every time you navigate between pages
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,   // 30 seconds — data won't re-fetch on revisit
-      gcTime: 300_000,     // 5 minutes — keep unused data in cache
+      staleTime: 300_000,  // 5 minutes — data won't re-fetch on revisit
+      gcTime: 900_000,     // 15 minutes — keep unused data in cache
       retry: 1,            // Only retry failed queries once
     },
   },

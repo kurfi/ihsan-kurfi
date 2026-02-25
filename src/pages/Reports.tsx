@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ResponsiveTable } from '@/components/ui/responsive-table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+
 import {
     useExpiringDocuments,
     useDualStreamProfitability,
@@ -21,8 +23,9 @@ import {
 import { useMonthlyProfitLoss, useReceivablesAging } from '@/hooks/useFinancialReports';
 
 import { DualStreamCard } from '@/components/reports/DualStreamCard';
-import { FileDown, TrendingUp, TrendingDown, AlertTriangle, Banknote, Package, Truck, Users, FileText } from 'lucide-react';
+import { FileDown, TrendingUp, TrendingDown, AlertTriangle, Banknote, Package, Truck, Users, FileText, Search } from 'lucide-react';
 import { format } from 'date-fns';
+
 import { generateDriverExpirySheet } from '@/lib/pdfGenerator';
 import { useDrivers } from '@/hooks/useFleet';
 import { useDocuments } from '@/hooks/useDocuments';
@@ -42,12 +45,20 @@ export default function Reports() {
     const [directPage, setDirectPage] = useState(1);
     const PAGE_SIZE = 15;
 
+    // Search states
+    const [docSearch, setDocSearch] = useState("");
+    const [fleetSearch, setFleetSearch] = useState("");
+    const [pendingSearch, setPendingSearch] = useState("");
+    const [receivableSearch, setReceivableSearch] = useState("");
+    const [debtorSearch, setDebtorSearch] = useState("");
+
+
     // Compliance tab queries — only run when compliance tab is active
     const isComplianceTab = activeTab === 'compliance';
     const { data: expiringDocs = [], isLoading: docsLoading } = useExpiringDocuments(isComplianceTab);
     const { data: fleetStatus = [], isLoading: fleetLoading } = useFleetAvailability(isComplianceTab);
-    const { data: drivers = [] } = useDrivers();
-    const { data: documents = [] } = useDocuments();
+    const { data: drivers = [] } = useDrivers({ enabled: isComplianceTab });
+    const { data: documents = [] } = useDocuments({ enabled: isComplianceTab });
 
     // Sales tab queries — only run when sales tab is active
     const isSalesTab = activeTab === 'sales';
@@ -66,6 +77,34 @@ export default function Reports() {
     const directDrops = directDropsData?.items || [];
     const directCount = directDropsData?.count || 0;
     const { data: dualStreamData = [] } = useDualStreamProfitability(isFinanceTab);
+
+    // Filtering logic
+    const filteredExpiringDocs = expiringDocs.filter(doc =>
+        doc.entity_name.toLowerCase().includes(docSearch.toLowerCase()) ||
+        (doc.document_number && doc.document_number.toLowerCase().includes(docSearch.toLowerCase())) ||
+        doc.document_type.toLowerCase().includes(docSearch.toLowerCase())
+    );
+
+    const filteredFleetStatus = fleetStatus.filter(truck =>
+        truck.plate_number.toLowerCase().includes(fleetSearch.toLowerCase()) ||
+        (truck.model && truck.model.toLowerCase().includes(fleetSearch.toLowerCase()))
+    );
+
+    const filteredPendingDeliveries = pendingDeliveries.filter(order =>
+        order.order_number.toLowerCase().includes(pendingSearch.toLowerCase()) ||
+        (order.customers?.name && order.customers.name.toLowerCase().includes(pendingSearch.toLowerCase())) ||
+        (order.trucks?.plate_number && order.trucks.plate_number.toLowerCase().includes(pendingSearch.toLowerCase())) ||
+        (order.drivers?.name && order.drivers.name.toLowerCase().includes(pendingSearch.toLowerCase()))
+    );
+
+    const filteredReceivables = receivables.filter(r =>
+        r.customer_name.toLowerCase().includes(receivableSearch.toLowerCase())
+    );
+
+    const filteredCustomerAging = customerAging.filter(c =>
+        c.name.toLowerCase().includes(debtorSearch.toLowerCase())
+    );
+
 
     const currentMonth = monthlyPL[0];
     const totalReceivables = receivables.reduce((sum, r) => sum + r.total_owed, 0);
@@ -114,20 +153,33 @@ export default function Reports() {
                                     </CardTitle>
                                     <CardDescription>Documents expiring in the next 30 days</CardDescription>
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button onClick={handleExportDriverExpiry} variant="outline" size="sm">
-                                        <FileDown className="h-4 w-4 mr-2" />
-                                        Export PDF
-                                    </Button>
-                                    <Button
-                                        onClick={() => exportToExcel(expiringDocs, 'expiring_documents')}
-                                        variant="outline"
-                                        size="sm"
-                                    >
-                                        <FileDown className="h-4 w-4 mr-2" />
-                                        Export Excel
-                                    </Button>
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                    <div className="relative w-full sm:w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search documents..."
+                                            value={docSearch}
+                                            onChange={(e) => setDocSearch(e.target.value)}
+                                            className="pl-9 h-9"
+                                        />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button onClick={handleExportDriverExpiry} variant="outline" size="sm" className="w-full sm:w-auto">
+                                            <FileDown className="h-4 w-4 mr-2" />
+                                            Export PDF
+                                        </Button>
+                                        <Button
+                                            onClick={() => exportToExcel(expiringDocs, 'expiring_documents')}
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full sm:w-auto"
+                                        >
+                                            <FileDown className="h-4 w-4 mr-2" />
+                                            Export Excel
+                                        </Button>
+                                    </div>
                                 </div>
+
                             </CardHeader>
                             <CardContent>
                                 {docsLoading ? (
@@ -135,17 +187,18 @@ export default function Reports() {
                                 ) : (
                                     <>
                                         <div className="md:hidden grid gap-4">
-                                            {expiringDocs.length === 0 ? (
+                                            {filteredExpiringDocs.length === 0 ? (
                                                 <EmptyState
                                                     icon={AlertTriangle}
                                                     title="No expiring documents"
                                                     description="All documents are up to date"
                                                 />
                                             ) : (
-                                                expiringDocs.map((doc) => (
+                                                filteredExpiringDocs.map((doc) => (
                                                     <DocumentExpiryCard key={doc.id} doc={doc} />
                                                 ))
                                             )}
+
                                         </div>
                                         <div className="hidden md:block">
                                             <ResponsiveTable>
@@ -162,7 +215,7 @@ export default function Reports() {
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {expiringDocs.length === 0 ? (
+                                                        {filteredExpiringDocs.length === 0 ? (
                                                             <TableRow>
                                                                 <TableCell colSpan={7} className="text-center py-8">
                                                                     <EmptyState
@@ -173,7 +226,8 @@ export default function Reports() {
                                                                 </TableCell>
                                                             </TableRow>
                                                         ) : (
-                                                            expiringDocs.map((doc) => (
+                                                            filteredExpiringDocs.map((doc) => (
+
                                                                 <TableRow key={doc.id}>
                                                                     <TableCell className="font-medium">{doc.entity_name}</TableCell>
                                                                     <TableCell className="capitalize">{doc.entity_type}</TableCell>
@@ -220,14 +274,27 @@ export default function Reports() {
                                     </CardTitle>
                                     <CardDescription>Current status of all fleet vehicles</CardDescription>
                                 </div>
-                                <Button
-                                    onClick={() => exportToExcel(fleetStatus, 'fleet_availability')}
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    <FileDown className="h-4 w-4 mr-2" />
-                                    Export Excel
-                                </Button>
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                    <div className="relative w-full sm:w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search trucks..."
+                                            value={fleetSearch}
+                                            onChange={(e) => setFleetSearch(e.target.value)}
+                                            className="pl-9 h-9"
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={() => exportToExcel(fleetStatus, 'fleet_availability')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full sm:w-auto"
+                                    >
+                                        <FileDown className="h-4 w-4 mr-2" />
+                                        Export Excel
+                                    </Button>
+                                </div>
+
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-4 gap-4 mb-4">
@@ -266,10 +333,11 @@ export default function Reports() {
                                 </div>
                                 <>
                                     <div className="md:hidden grid gap-4">
-                                        {fleetStatus.map((truck) => (
+                                        {filteredFleetStatus.map((truck) => (
                                             <FleetStatusCard key={truck.id} truck={truck} />
                                         ))}
                                     </div>
+
                                     <div className="hidden md:block">
                                         <ResponsiveTable>
                                             <Table>
@@ -283,7 +351,8 @@ export default function Reports() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {fleetStatus.map((truck) => (
+                                                    {filteredFleetStatus.map((truck) => (
+
                                                         <TableRow key={truck.id}>
                                                             <TableCell className="font-medium">{truck.plate_number}</TableCell>
                                                             <TableCell>{truck.model || 'N/A'}</TableCell>
@@ -353,14 +422,27 @@ export default function Reports() {
                                     <CardTitle className="heading-section">Pending Deliveries</CardTitle>
                                     <CardDescription>Orders that have been dispatched but not yet delivered</CardDescription>
                                 </div>
-                                <Button
-                                    onClick={() => exportToExcel(pendingDeliveries, 'pending_deliveries')}
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    <FileDown className="h-4 w-4 mr-2" />
-                                    Export Excel
-                                </Button>
+                                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                    <div className="relative w-full sm:w-64">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search pending orders..."
+                                            value={pendingSearch}
+                                            onChange={(e) => setPendingSearch(e.target.value)}
+                                            className="pl-9 h-9"
+                                        />
+                                    </div>
+                                    <Button
+                                        onClick={() => exportToExcel(pendingDeliveries, 'pending_deliveries')}
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full sm:w-auto"
+                                    >
+                                        <FileDown className="h-4 w-4 mr-2" />
+                                        Export Excel
+                                    </Button>
+                                </div>
+
                             </CardHeader>
                             <CardContent>
                                 {deliveriesLoading ? (
@@ -368,18 +450,19 @@ export default function Reports() {
                                 ) : (
                                     <>
                                         <div className="md:hidden grid gap-4">
-                                            {pendingDeliveries.length === 0 ? (
+                                            {filteredPendingDeliveries.length === 0 ? (
                                                 <EmptyState
                                                     icon={Truck}
                                                     title="No pending deliveries"
                                                     description="All orders have been delivered"
                                                 />
                                             ) : (
-                                                pendingDeliveries.map((order) => (
+                                                filteredPendingDeliveries.map((order) => (
                                                     <PendingDeliveryCard key={order.id} order={order} />
                                                 ))
                                             )}
                                         </div>
+
                                         <div className="hidden md:block">
                                             <ResponsiveTable>
                                                 <Table>
@@ -394,7 +477,7 @@ export default function Reports() {
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {pendingDeliveries.length === 0 ? (
+                                                        {filteredPendingDeliveries.length === 0 ? (
                                                             <TableRow>
                                                                 <TableCell colSpan={6} className="text-center py-8">
                                                                     <EmptyState
@@ -405,7 +488,8 @@ export default function Reports() {
                                                                 </TableCell>
                                                             </TableRow>
                                                         ) : (
-                                                            pendingDeliveries.map((order) => (
+                                                            filteredPendingDeliveries.map((order) => (
+
                                                                 <TableRow key={order.id}>
                                                                     <TableCell className="font-medium">{order.order_number}</TableCell>
                                                                     <TableCell>{order.customers?.name || 'N/A'}</TableCell>
@@ -427,8 +511,9 @@ export default function Reports() {
 
                                 <div className="flex items-center justify-between mt-4">
                                     <p className="text-sm text-muted-foreground">
-                                        Showing {pendingDeliveries.length} of {pendingCount} deliveries
+                                        Showing {filteredPendingDeliveries.length} of {pendingCount} deliveries
                                     </p>
+
                                     <div className="flex gap-2">
                                         <Button
                                             variant="outline"
@@ -662,14 +747,27 @@ export default function Reports() {
                                                 Total Outstanding: ₦{totalReceivables.toLocaleString()} from {receivables.length} customers
                                             </CardDescription>
                                         </div>
-                                        <Button
-                                            onClick={() => exportToExcel(receivables as any, 'receivables_aging')}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            <FileDown className="h-4 w-4 mr-2" />
-                                            Export Excel
-                                        </Button>
+                                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                            <div className="relative w-full sm:w-64">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search customers..."
+                                                    value={receivableSearch}
+                                                    onChange={(e) => setReceivableSearch(e.target.value)}
+                                                    className="pl-9 h-9"
+                                                />
+                                            </div>
+                                            <Button
+                                                onClick={() => exportToExcel(receivables as any, 'receivables_aging')}
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full sm:w-auto"
+                                            >
+                                                <FileDown className="h-4 w-4 mr-2" />
+                                                Export Excel
+                                            </Button>
+                                        </div>
+
                                     </CardHeader>
                                     <CardContent className="p-0">
                                         {loadingReceivables ? (
@@ -694,7 +792,8 @@ export default function Reports() {
                                                         </TableRow>
                                                     </TableHeader>
                                                     <TableBody>
-                                                        {receivables.map((r) => (
+                                                        {filteredReceivables.map((r) => (
+
                                                             <TableRow key={r.customer_id}>
                                                                 <TableCell className="font-medium">{r.customer_name}</TableCell>
                                                                 <TableCell className="text-right font-semibold">₦{r.total_owed.toLocaleString()}</TableCell>
@@ -732,31 +831,45 @@ export default function Reports() {
                                             </CardTitle>
                                             <CardDescription>Breakdown of outstanding balances by age bracket</CardDescription>
                                         </div>
-                                        <Button
-                                            onClick={() => exportToExcel(customerAging, 'customer_aging')}
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            <FileDown className="h-4 w-4 mr-2" />
-                                            Export Excel
-                                        </Button>
+                                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                                            <div className="relative w-full sm:w-64">
+                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search debtors..."
+                                                    value={debtorSearch}
+                                                    onChange={(e) => setDebtorSearch(e.target.value)}
+                                                    className="pl-9 h-9"
+                                                />
+                                            </div>
+                                            <Button
+                                                onClick={() => exportToExcel(customerAging, 'customer_aging')}
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full sm:w-auto"
+                                            >
+                                                <FileDown className="h-4 w-4 mr-2" />
+                                                Export Excel
+                                            </Button>
+                                        </div>
+
                                     </CardHeader>
                                     <CardContent>
                                         <>
                                             <div className="md:hidden grid gap-4">
-                                                {customerAging.length === 0 ? (
+                                                {filteredCustomerAging.length === 0 ? (
                                                     <EmptyState
                                                         icon={Users}
                                                         title="No customer debt"
                                                         description="All customers are up to date"
                                                     />
                                                 ) : (
-                                                    customerAging
+                                                    filteredCustomerAging
                                                         .filter((c) => (c.current_balance ?? 0) > 0)
                                                         .map((customer) => (
                                                             <CustomerAgingCard key={customer.id} customer={customer} />
                                                         ))
                                                 )}
+
                                             </div>
                                             <div className="hidden md:block">
                                                 <ResponsiveTable>
@@ -773,7 +886,7 @@ export default function Reports() {
                                                             </TableRow>
                                                         </TableHeader>
                                                         <TableBody>
-                                                            {customerAging.length === 0 ? (
+                                                            {filteredCustomerAging.length === 0 ? (
                                                                 <TableRow>
                                                                     <TableCell colSpan={7} className="text-center py-8">
                                                                         <EmptyState
@@ -784,9 +897,10 @@ export default function Reports() {
                                                                     </TableCell>
                                                                 </TableRow>
                                                             ) : (
-                                                                customerAging
+                                                                filteredCustomerAging
                                                                     .filter((c) => (c.current_balance ?? 0) > 0)
                                                                     .map((customer) => (
+
                                                                         <TableRow key={customer.id}>
                                                                             <TableCell className="font-medium">{customer.name}</TableCell>
                                                                             <TableCell>₦{(customer.credit_limit || 0).toLocaleString()}</TableCell>

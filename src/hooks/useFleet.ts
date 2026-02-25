@@ -55,6 +55,7 @@ export interface DriverTransaction {
 export function useTrucks() {
   return useQuery({
     queryKey: ["trucks"],
+    staleTime: 600_000, // 10 minutes — fleet data changes infrequently
     queryFn: async () => {
       const { data, error } = await supabase
         .from("trucks")
@@ -66,9 +67,11 @@ export function useTrucks() {
   });
 }
 
-export function useDrivers() {
+export function useDrivers(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["drivers"],
+    staleTime: 600_000, // 10 minutes — driver list changes infrequently
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("drivers")

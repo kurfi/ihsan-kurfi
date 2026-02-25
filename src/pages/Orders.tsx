@@ -46,7 +46,7 @@ import { useSuppliers } from "@/hooks/usePurchases";
 import { useDocuments } from "@/hooks/useDocuments";
 
 import { useReconciliation } from "@/hooks/useReconciliation";
-import { Plus, Package, ArrowRight, AlertCircle, FileText, Upload, MoreVertical, Printer, Edit, Trash2, UserPlus, Copy, Check } from "lucide-react";
+import { Plus, Package, ArrowRight, AlertCircle, FileText, Upload, MoreVertical, Printer, Edit, Trash2, UserPlus, Copy, Check, Search } from "lucide-react";
 import { format, isPast } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
@@ -74,7 +74,15 @@ export default function Orders() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 50;
 
-  const { data: paginatedData, isLoading: ordersLoading } = usePaginatedOrders(currentPage, pageSize);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data: paginatedData, isLoading: ordersLoading } = usePaginatedOrders(currentPage, pageSize, debouncedQuery);
   const orders = paginatedData?.orders || [];
   const totalOrders = paginatedData?.count || 0;
 
@@ -129,6 +137,8 @@ export default function Orders() {
     cement_type: "",
     waybill_number: "",
   });
+
+  const [orderSortBy, setOrderSortBy] = useState("date_desc");
 
   const [uploadingWaybill, setUploadingWaybill] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -323,6 +333,23 @@ export default function Orders() {
 
   const selectedOrderData = orders.find(o => o.id === selectedOrder);
 
+  const sortedOrders = [...orders].sort((a, b) => {
+    if (orderSortBy === "date_desc") {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    } else if (orderSortBy === "date_asc") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    } else if (orderSortBy === "status") {
+      const idxA = statusPipeline.indexOf(a.status);
+      const idxB = statusPipeline.indexOf(b.status);
+      return idxA - idxB;
+    } else if (orderSortBy === "customer_asc") {
+      const nameA = a.customer?.name || "";
+      const nameB = b.customer?.name || "";
+      return nameA.localeCompare(nameB);
+    }
+    return 0;
+  });
+
   return (
     <MainLayout title="Order Management">
       <div className="mobile-spacing animate-fade-in space-y-6">
@@ -355,11 +382,33 @@ export default function Orders() {
           </CardContent>
         </Card>
 
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <h2 className="heading-section">All Orders</h2>
-          <Button className="gradient-primary" onClick={() => setDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" /> New Order
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-grow sm:flex-grow-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search order or waybill..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-full sm:w-[200px]"
+              />
+            </div>
+            <Select value={orderSortBy} onValueChange={setOrderSortBy}>
+              <SelectTrigger className="w-[140px] sm:w-[150px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_desc">Newest</SelectItem>
+                <SelectItem value="date_asc">Oldest</SelectItem>
+                <SelectItem value="status">Status</SelectItem>
+                <SelectItem value="customer_asc">Customer (A-Z)</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button className="gradient-primary flex-grow sm:flex-grow-0" onClick={() => setDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" /> New Order
+            </Button>
+          </div>
         </div>
 
         {/* Create Order Dialog */}
@@ -373,7 +422,7 @@ export default function Orders() {
           </div>
         ) : orders.length > 0 && (
           <div className="grid grid-cols-1 md:hidden gap-4">
-            {orders.map((order) => (
+            {sortedOrders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}
@@ -407,7 +456,7 @@ export default function Orders() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orders.map((order) => (
+                    {sortedOrders.map((order) => (
                       <TableRow key={order.id}>
                         <TableCell>
                           <div className="font-medium">{order.order_number}</div>

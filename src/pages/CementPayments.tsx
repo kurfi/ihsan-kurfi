@@ -16,7 +16,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCementPaymentsToDangote, useAddCementPaymentToDangote, useDeleteCementPayment } from "@/hooks/useCementPayments";
 import { useSuppliers, useWallets } from "@/hooks/usePurchases";
-import { Plus, Banknote, Trash2, Wallet } from "lucide-react";
+import { Plus, Banknote, Trash2, Wallet, Search } from "lucide-react";
 import { format } from "date-fns";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -36,6 +36,7 @@ export default function CementPayments() {
     const addPayment = useAddCementPaymentToDangote();
     const deletePayment = useDeleteCementPayment();
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [paymentSortBy, setPaymentSortBy] = useState("date_desc");
     const [form, setForm] = useState({
         supplier_id: "",
         payment_date: format(new Date(), "yyyy-MM-dd"),
@@ -47,6 +48,10 @@ export default function CementPayments() {
         cement_type: "",
         notes: "",
     });
+
+    const [paymentSearch, setPaymentSearch] = useState("");
+    const [walletSearch, setWalletSearch] = useState("");
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,6 +90,32 @@ export default function CementPayments() {
     const paymentsThisMonth = payments.filter(p =>
         new Date(p.payment_date).getMonth() === new Date().getMonth()
     );
+
+    const filteredWallets = wallets.filter((wallet: any) =>
+        (wallet.suppliers?.name && wallet.suppliers.name.toLowerCase().includes(walletSearch.toLowerCase())) ||
+        (wallet.cement_type && wallet.cement_type.toLowerCase().includes(walletSearch.toLowerCase()))
+    );
+
+    const filteredPayments = payments.filter(payment =>
+        (payment.payment_reference && payment.payment_reference.toLowerCase().includes(paymentSearch.toLowerCase())) ||
+        (payment.cement_type && payment.cement_type.toLowerCase().includes(paymentSearch.toLowerCase())) ||
+        ((payment as any).supplier?.name && (payment as any).supplier.name.toLowerCase().includes(paymentSearch.toLowerCase())) ||
+        (payment.period_covered && payment.period_covered.toLowerCase().includes(paymentSearch.toLowerCase()))
+    );
+
+    const sortedPayments = [...filteredPayments].sort((a, b) => {
+
+        if (paymentSortBy === "date_desc") {
+            return new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime();
+        } else if (paymentSortBy === "date_asc") {
+            return new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime();
+        } else if (paymentSortBy === "amount_desc") {
+            return b.amount_paid - a.amount_paid;
+        } else if (paymentSortBy === "amount_asc") {
+            return a.amount_paid - b.amount_paid;
+        }
+        return 0;
+    });
 
     return (
         <MainLayout title="Cement Payments">
@@ -231,31 +262,50 @@ export default function CementPayments() {
                 </div>
 
                 {/* Manufacturer Wallets Section */}
-                <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-5">
-                    {isLoadingWallets ? (
-                        Array(4).fill(0).map((_, i) => <LoadingSkeleton key={i} className="h-24 w-full" />)
-                    ) : wallets.length === 0 ? (
-                        <div className="col-span-full py-6 text-center border-2 border-dashed rounded-lg bg-muted/20">
-                            <Wallet className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                            <p className="text-sm font-medium">No Manufacturer Wallets</p>
-                            <p className="text-xs text-muted-foreground">Wallets are created when you record a prepayment.</p>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                            <Wallet className="w-4 h-4" />
+                            Manufacturer Wallets
+                        </h3>
+                        <div className="relative w-full sm:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search wallets..."
+                                value={walletSearch}
+                                onChange={(e) => setWalletSearch(e.target.value)}
+                                className="pl-9 h-8 text-xs"
+                            />
                         </div>
-                    ) : (
-                        wallets.map((wallet: any) => (
-                            <Card key={wallet.id} className="bg-accent/5 overflow-hidden transition-all hover:shadow-md">
-                                <CardHeader className="p-3 pb-0">
-                                    <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                                        {wallet.suppliers?.name}
-                                        <Badge variant="outline" className="text-[9px] h-4 px-1">{wallet.unit}</Badge>
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-3 pt-1">
-                                    <div className="text-lg font-bold">₦{wallet.balance.toLocaleString()}</div>
-                                    <p className="text-xs text-primary truncate font-medium">{wallet.cement_type}</p>
-                                </CardContent>
-                            </Card>
-                        ))
-                    )}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-5">
+
+                        {isLoadingWallets ? (
+                            Array(4).fill(0).map((_, i) => <LoadingSkeleton key={i} className="h-24 w-full" />)
+                        ) : wallets.length === 0 ? (
+                            <div className="col-span-full py-6 text-center border-2 border-dashed rounded-lg bg-muted/20">
+                                <Wallet className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                                <p className="text-sm font-medium">No Manufacturer Wallets</p>
+                                <p className="text-xs text-muted-foreground">Wallets are created when you record a prepayment.</p>
+                            </div>
+                        ) : (
+                            filteredWallets.map((wallet: any) => (
+
+                                <Card key={wallet.id} className="bg-accent/5 overflow-hidden transition-all hover:shadow-md">
+                                    <CardHeader className="p-3 pb-0">
+                                        <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                                            {wallet.suppliers?.name}
+                                            <Badge variant="outline" className="text-[9px] h-4 px-1">{wallet.unit}</Badge>
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-3 pt-1">
+                                        <div className="text-lg font-bold">₦{wallet.balance.toLocaleString()}</div>
+                                        <p className="text-xs text-primary truncate font-medium">{wallet.cement_type}</p>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
+                    </div>
                 </div>
 
                 {/* Summary Cards */}
@@ -296,9 +346,32 @@ export default function CementPayments() {
 
                 {/* Payment History */}
                 <Card className="shadow-card">
-                    <CardHeader>
+                    <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between p-4 sm:p-6">
                         <CardTitle className="heading-section">Payment History</CardTitle>
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <div className="relative w-full sm:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search payments..."
+                                    value={paymentSearch}
+                                    onChange={(e) => setPaymentSearch(e.target.value)}
+                                    className="pl-9 h-9"
+                                />
+                            </div>
+                            <Select value={paymentSortBy} onValueChange={setPaymentSortBy}>
+                                <SelectTrigger className="w-full sm:w-[180px]">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="date_desc">Newest First</SelectItem>
+                                    <SelectItem value="date_asc">Oldest First</SelectItem>
+                                    <SelectItem value="amount_desc">Amount (High to Low)</SelectItem>
+                                    <SelectItem value="amount_asc">Amount (Low to High)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </CardHeader>
+
                     <CardContent className="p-0">
                         {isLoading ? (
                             <div className="p-4">
@@ -326,7 +399,7 @@ export default function CementPayments() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {payments.map((payment) => (
+                                        {sortedPayments.map((payment) => (
                                             <TableRow key={payment.id}>
                                                 <TableCell>{format(new Date(payment.payment_date), "MMM dd, yyyy")}</TableCell>
                                                 <TableCell className="font-medium">{(payment as any).supplier?.name || "-"}</TableCell>

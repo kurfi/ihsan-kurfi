@@ -17,45 +17,32 @@ export interface Document {
   entity_name?: string;
 }
 
-export function useDocuments() {
+export function useDocuments(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["documents"],
+    staleTime: 600_000, // 10 minutes — document statuses change infrequently
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
-      const { data: documents, error } = await supabase
+      // Single query using Supabase nested selects — eliminates 2 extra round-trips
+      const { data, error } = await supabase
         .from("documents")
-        .select("*")
+        .select(`
+          *,
+          truck:trucks!left(id, plate_number),
+          driver:drivers!left(id, name)
+        `)
         .order("expiry_date", { ascending: true });
 
       if (error) throw error;
 
-      // Fetch entity names
-      const truckIds = documents
-        .filter((d) => d.entity_type === "truck")
-        .map((d) => d.entity_id);
-      const driverIds = documents
-        .filter((d) => d.entity_type === "driver")
-        .map((d) => d.entity_id);
-
-      const [trucksRes, driversRes] = await Promise.all([
-        truckIds.length > 0
-          ? supabase.from("trucks").select("id, plate_number").in("id", truckIds)
-          : { data: [] },
-        driverIds.length > 0
-          ? supabase.from("drivers").select("id, name").in("id", driverIds)
-          : { data: [] },
-      ]);
-
-      const truckMap = new Map<string, string>();
-      trucksRes.data?.forEach((t) => truckMap.set(t.id, t.plate_number));
-      const driverMap = new Map<string, string>();
-      driversRes.data?.forEach((d) => driverMap.set(d.id, d.name));
-
-      return documents.map((doc) => ({
+      return data.map((doc: any) => ({
         ...doc,
         entity_name:
           doc.entity_type === "truck"
-            ? truckMap.get(doc.entity_id)
-            : driverMap.get(doc.entity_id),
+            ? doc.truck?.plate_number
+            : doc.driver?.name,
+        truck: undefined,
+        driver: undefined,
       })) as Document[];
     },
   });

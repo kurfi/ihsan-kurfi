@@ -38,7 +38,7 @@ import { usePayments, useAddPayment, useExpenses, useAddExpense, useUpdatePaymen
 import { useCustomers } from "@/hooks/useCustomers";
 import { useOrders } from "@/hooks/useOrders";
 import { useTrucks } from "@/hooks/useFleet";
-import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck, Eye } from "lucide-react";
+import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck, Eye, Search } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { PaymentCard } from "@/components/finance/PaymentCard";
 import { ExpenseCard } from "@/components/finance/ExpenseCard";
@@ -82,8 +82,16 @@ export default function Finance() {
     is_active: true
   });
 
+  const [paymentSortBy, setPaymentSortBy] = useState("date_desc");
+  const [expenseSortBy, setExpenseSortBy] = useState("date_desc");
+
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
   const [viewingAccountId, setViewingAccountId] = useState<string | null>(null);
+
+  const [paymentSearch, setPaymentSearch] = useState("");
+  const [expenseSearch, setExpenseSearch] = useState("");
+  const [accountSearch, setAccountSearch] = useState("");
+
 
   const { data: payments = [], isLoading: loadingPayments } = usePayments();
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
@@ -339,6 +347,67 @@ export default function Finance() {
     return getAccountPayments(accountId).reduce((sum, p) => sum + p.amount, 0);
   };
 
+  const filteredPayments = payments.filter(payment =>
+    (payment.customer?.name && payment.customer.name.toLowerCase().includes(paymentSearch.toLowerCase())) ||
+    (payment.reference_number && payment.reference_number.toLowerCase().includes(paymentSearch.toLowerCase())) ||
+    (payment.order?.order_number && payment.order.order_number.toLowerCase().includes(paymentSearch.toLowerCase()))
+  );
+
+  const sortedPayments = [...filteredPayments].sort((a, b) => {
+
+    if (paymentSortBy === "date_desc") {
+      return new Date(b.payment_date || b.created_at).getTime() - new Date(a.payment_date || a.created_at).getTime();
+    } else if (paymentSortBy === "date_asc") {
+      return new Date(a.payment_date || a.created_at).getTime() - new Date(b.payment_date || b.created_at).getTime();
+    } else if (paymentSortBy === "amount_desc") {
+      return b.amount - a.amount;
+    } else if (paymentSortBy === "amount_asc") {
+      return a.amount - b.amount;
+    } else if (paymentSortBy === "customer_asc") {
+      const nameA = a.customer?.name || "";
+      const nameB = b.customer?.name || "";
+      return nameA.localeCompare(nameB);
+    } else if (paymentSortBy === "customer_desc") {
+      const nameA = a.customer?.name || "";
+      const nameB = b.customer?.name || "";
+      return nameB.localeCompare(nameA);
+    }
+    return 0;
+  });
+
+  const filteredExpenses = expenses.filter(expense =>
+    (expense.description && expense.description.toLowerCase().includes(expenseSearch.toLowerCase())) ||
+    (expense.category && expense.category.toLowerCase().includes(expenseSearch.toLowerCase())) ||
+    (expense.expense_type && expense.expense_type.toLowerCase().includes(expenseSearch.toLowerCase())) ||
+    (expense.order?.order_number && expense.order.order_number.toLowerCase().includes(expenseSearch.toLowerCase())) ||
+    (expense.truck?.plate_number && expense.truck.plate_number.toLowerCase().includes(expenseSearch.toLowerCase()))
+  );
+
+  const sortedExpenses = [...filteredExpenses].sort((a, b) => {
+
+    if (expenseSortBy === "date_desc") {
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    } else if (expenseSortBy === "date_asc") {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    } else if (expenseSortBy === "amount_desc") {
+      return b.amount - a.amount;
+    } else if (expenseSortBy === "amount_asc") {
+      return a.amount - b.amount;
+    } else if (expenseSortBy === "category_asc") {
+      const catA = a.category || a.expense_type;
+      const catB = b.category || b.expense_type;
+      return catA.localeCompare(catB);
+    }
+    return 0;
+  });
+
+  const filteredAccounts = paymentAccounts.filter(account =>
+    account.bank_name.toLowerCase().includes(accountSearch.toLowerCase()) ||
+    account.account_number.includes(accountSearch) ||
+    account.account_name.toLowerCase().includes(accountSearch.toLowerCase())
+  );
+
+
   return (
     <MainLayout title="Finance & Payments">
       <div className="mobile-spacing animate-fade-in">
@@ -445,12 +514,35 @@ export default function Finance() {
 
           <TabsContent value="payments">
             <Card className="shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
                 <CardTitle className="heading-section flex items-center gap-2">
                   <Receipt className="w-5 h-5 text-primary" />
                   Payment Ledger
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search payments..."
+                      value={paymentSearch}
+                      onChange={(e) => setPaymentSearch(e.target.value)}
+                      className="pl-9 h-9"
+                    />
+                  </div>
+                  <Select value={paymentSortBy} onValueChange={setPaymentSortBy}>
+
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date_desc">Newest First</SelectItem>
+                      <SelectItem value="date_asc">Oldest First</SelectItem>
+                      <SelectItem value="amount_desc">Amount (High to Low)</SelectItem>
+                      <SelectItem value="amount_asc">Amount (Low to High)</SelectItem>
+                      <SelectItem value="customer_asc">Customer (A-Z)</SelectItem>
+                      <SelectItem value="customer_desc">Customer (Z-A)</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <HaulagePaymentDialog />
                   <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
                     <DialogTrigger asChild>
@@ -573,7 +665,7 @@ export default function Finance() {
                 ) : (
                   <>
                     <div className="md:hidden grid gap-4">
-                      {payments.map((payment) => (
+                      {sortedPayments.map((payment) => (
                         <PaymentCard
                           key={payment.id}
                           payment={payment}
@@ -600,7 +692,7 @@ export default function Finance() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {payments.map((payment) => (
+                            {sortedPayments.map((payment) => (
                               <TableRow key={payment.id}>
                                 <TableCell>{format(new Date(payment.payment_date || payment.created_at), "MMM d, yyyy")}</TableCell>
                                 <TableCell className="font-medium">{payment.customer?.name || "-"}</TableCell>
@@ -687,103 +779,127 @@ export default function Finance() {
 
           <TabsContent value="expenses">
             <Card className="shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
                 <CardTitle className="heading-section flex items-center gap-2">
                   <TrendingDown className="w-5 h-5 text-destructive" />
                   Expense Tracking
                 </CardTitle>
-                <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Plus className="w-4 h-4 mr-2" /> Log Expense
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Log Expense</DialogTitle>
-                      <DialogDescription>Record a new company expense.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Category *</Label>
-                        <Select value={expenseForm.category} onValueChange={(v) => setExpenseForm({ ...expenseForm, category: v, expense_type: v })}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fuel">Fuel</SelectItem>
-                            <SelectItem value="driver_allowance">Driver Allowance</SelectItem>
-                            <SelectItem value="toll">Toll Gate</SelectItem>
-                            <SelectItem value="salary">Salary</SelectItem>
-                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                            <SelectItem value="office">Office</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search expenses..."
+                      value={expenseSearch}
+                      onChange={(e) => setExpenseSearch(e.target.value)}
+                      className="pl-9 h-9"
+                    />
+                  </div>
+                  <Select value={expenseSortBy} onValueChange={setExpenseSortBy}>
 
-                      <div className="grid grid-cols-2 gap-4">
+                    <SelectTrigger className="w-full sm:w-[180px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="date_desc">Newest First</SelectItem>
+                      <SelectItem value="date_asc">Oldest First</SelectItem>
+                      <SelectItem value="amount_desc">Amount (High to Low)</SelectItem>
+                      <SelectItem value="amount_asc">Amount (Low to High)</SelectItem>
+                      <SelectItem value="category_asc">Category (A-Z)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Dialog open={expenseDialogOpen} onOpenChange={setExpenseDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive">
+                        <Plus className="w-4 h-4 mr-2" /> Log Expense
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Log Expense</DialogTitle>
+                        <DialogDescription>Record a new company expense.</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                          <Label>Related Order (Optional)</Label>
-                          <Select value={expenseForm.order_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, order_id: v })}>
+                          <Label>Category *</Label>
+                          <Select value={expenseForm.category} onValueChange={(v) => setExpenseForm({ ...expenseForm, category: v, expense_type: v })}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select order" />
+                              <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="NONE">None</SelectItem>
-                              {orders.map((o) => (
-                                <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
-                              ))}
+                              <SelectItem value="fuel">Fuel</SelectItem>
+                              <SelectItem value="driver_allowance">Driver Allowance</SelectItem>
+                              <SelectItem value="toll">Toll Gate</SelectItem>
+                              <SelectItem value="salary">Salary</SelectItem>
+                              <SelectItem value="maintenance">Maintenance</SelectItem>
+                              <SelectItem value="office">Office</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label>Related Truck (Optional)</Label>
-                          <Select value={expenseForm.truck_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, truck_id: v })}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select truck" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="NONE">None</SelectItem>
-                              {trucks.map((t) => (
-                                <SelectItem key={t.id} value={t.id}>{t.plate_number}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Related Order (Optional)</Label>
+                            <Select value={expenseForm.order_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, order_id: v })}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select order" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="NONE">None</SelectItem>
+                                {orders.map((o) => (
+                                  <SelectItem key={o.id} value={o.id}>{o.order_number}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Related Truck (Optional)</Label>
+                            <Select value={expenseForm.truck_id} onValueChange={(v) => setExpenseForm({ ...expenseForm, truck_id: v })}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select truck" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="NONE">None</SelectItem>
+                                {trucks.map((t) => (
+                                  <SelectItem key={t.id} value={t.id}>{t.plate_number}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="space-y-2">
-                        <Label>Amount (₦) *</Label>
-                        <Input
-                          type="number"
-                          value={expenseForm.amount}
-                          onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                          placeholder="50000"
-                        />
-                      </div>
+                        <div className="space-y-2">
+                          <Label>Amount (₦) *</Label>
+                          <Input
+                            type="number"
+                            value={expenseForm.amount}
+                            onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                            placeholder="50000"
+                          />
+                        </div>
 
-                      <div className="space-y-2">
-                        <Label>Description</Label>
-                        <Textarea
-                          value={expenseForm.description}
-                          onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                          placeholder="Additional details"
-                        />
-                      </div>
+                        <div className="space-y-2">
+                          <Label>Description</Label>
+                          <Textarea
+                            value={expenseForm.description}
+                            onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                            placeholder="Additional details"
+                          />
+                        </div>
 
-                      <LoadingButton
-                        onClick={handleAddExpense}
-                        className="w-full"
-                        disabled={!expenseForm.amount}
-                        isLoading={addExpense.isPending}
-                      >
-                        Log Expense
-                      </LoadingButton>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                        <LoadingButton
+                          onClick={handleAddExpense}
+                          className="w-full"
+                          disabled={!expenseForm.amount}
+                          isLoading={addExpense.isPending}
+                        >
+                          Log Expense
+                        </LoadingButton>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 {loadingExpenses ? (
@@ -798,7 +914,7 @@ export default function Finance() {
                 ) : (
                   <>
                     <div className="md:hidden grid gap-4">
-                      {expenses.map((expense) => (
+                      {sortedExpenses.map((expense) => (
                         <ExpenseCard
                           key={expense.id}
                           expense={expense}
@@ -822,7 +938,7 @@ export default function Finance() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {expenses.map((expense) => (
+                            {sortedExpenses.map((expense) => (
                               <TableRow key={expense.id}>
                                 <TableCell>{format(new Date(expense.created_at), "MMM d, yyyy")}</TableCell>
                                 <TableCell>
@@ -885,58 +1001,70 @@ export default function Finance() {
 
           <TabsContent value="accounts">
             <Card className="shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
                 <CardTitle className="heading-section flex items-center gap-2">
                   <Landmark className="w-5 h-5 text-primary" />
                   Payment Accounts
                 </CardTitle>
-                <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gradient-primary">
-                      <Plus className="w-4 h-4 mr-2" /> Add Account
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add Payment Account</DialogTitle>
-                      <DialogDescription>Add a new bank account for receiving payments.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label>Bank Name *</Label>
-                        <Input
-                          value={accountForm.bank_name}
-                          onChange={(e) => setAccountForm({ ...accountForm, bank_name: e.target.value })}
-                          placeholder="e.g. Zenith Bank"
-                        />
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search accounts..."
+                      value={accountSearch}
+                      onChange={(e) => setAccountSearch(e.target.value)}
+                      className="pl-9 h-9"
+                    />
+                  </div>
+                  <Dialog open={accountDialogOpen} onOpenChange={setAccountDialogOpen}>
+
+                    <DialogTrigger asChild>
+                      <Button className="gradient-primary">
+                        <Plus className="w-4 h-4 mr-2" /> Add Account
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Payment Account</DialogTitle>
+                        <DialogDescription>Add a new bank account for receiving payments.</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label>Bank Name *</Label>
+                          <Input
+                            value={accountForm.bank_name}
+                            onChange={(e) => setAccountForm({ ...accountForm, bank_name: e.target.value })}
+                            placeholder="e.g. Zenith Bank"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Account Number *</Label>
+                          <Input
+                            value={accountForm.account_number}
+                            onChange={(e) => setAccountForm({ ...accountForm, account_number: e.target.value })}
+                            placeholder="0123456789"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Account Name *</Label>
+                          <Input
+                            value={accountForm.account_name}
+                            onChange={(e) => setAccountForm({ ...accountForm, account_name: e.target.value })}
+                            placeholder="Account Holder Name"
+                          />
+                        </div>
+                        <LoadingButton
+                          onClick={handleAddAccount}
+                          className="w-full"
+                          disabled={!accountForm.bank_name || !accountForm.account_number || !accountForm.account_name}
+                          isLoading={addAccount.isPending}
+                        >
+                          Add Account
+                        </LoadingButton>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Account Number *</Label>
-                        <Input
-                          value={accountForm.account_number}
-                          onChange={(e) => setAccountForm({ ...accountForm, account_number: e.target.value })}
-                          placeholder="0123456789"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Account Name *</Label>
-                        <Input
-                          value={accountForm.account_name}
-                          onChange={(e) => setAccountForm({ ...accountForm, account_name: e.target.value })}
-                          placeholder="Account Holder Name"
-                        />
-                      </div>
-                      <LoadingButton
-                        onClick={handleAddAccount}
-                        className="w-full"
-                        disabled={!accountForm.bank_name || !accountForm.account_number || !accountForm.account_name}
-                        isLoading={addAccount.isPending}
-                      >
-                        Add Account
-                      </LoadingButton>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
               <CardContent>
                 {loadingAccounts ? (
@@ -962,7 +1090,7 @@ export default function Finance() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {paymentAccounts.map((account) => (
+                        {filteredAccounts.map((account) => (
                           <TableRow key={account.id}>
                             <TableCell className="font-medium">{account.bank_name}</TableCell>
                             <TableCell>{account.account_number}</TableCell>

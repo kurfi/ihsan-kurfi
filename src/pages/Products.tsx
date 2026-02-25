@@ -12,7 +12,7 @@ import { useProducts, useDepots, useAddDepot, useUpdateDepot, useDeleteDepot, us
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Package, MapPin, TrendingUp, Plus, Pencil, Trash2 } from "lucide-react";
+import { Package, MapPin, TrendingUp, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { format } from "date-fns";
 
 export default function Products() {
@@ -42,6 +42,8 @@ export default function Products() {
   const [addItemOpen, setAddItemOpen] = useState(false);
   const [editItemOpen, setEditItemOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [productSearch, setProductSearch] = useState("");
+
 
   // Handlers
   const handleAddDepot = () => {
@@ -153,20 +155,40 @@ export default function Products() {
     }
   };
 
-  // Group products by depot
-  const productsByDepot = depots.map((depot) => ({
-    ...depot,
-    items: products.filter((i) => i.depot_id === depot.id),
-  }));
+  // Group products by depot and sort
+  const productsByDepot = depots
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map((depot) => ({
+      ...depot,
+      items: products
+        .filter((i) => i.depot_id === depot.id)
+        .sort((a, b) => a.cement_type.localeCompare(b.cement_type)),
+    }))
+    .filter(depot =>
+      depot.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      depot.items.some(item => item.cement_type.toLowerCase().includes(productSearch.toLowerCase()))
+    );
+
 
   return (
     <MainLayout title="Products & Pricing">
       <div className="space-y-6 animate-fade-in">
-        <div className="flex justify-end">
-          <Button onClick={() => setAddDepotOpen(true)} className="gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search sources or products..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className="pl-9 h-10"
+            />
+          </div>
+          <Button onClick={() => setAddDepotOpen(true)} className="gap-2 w-full sm:w-auto">
             <Plus className="w-4 h-4" /> Add Source (Plant/Depot)
           </Button>
         </div>
+
 
         {/* Overview Cards - Pricing Focus */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
