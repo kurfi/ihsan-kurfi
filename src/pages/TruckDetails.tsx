@@ -87,15 +87,6 @@ export default function TruckDetails() {
         );
     }
 
-    const getMaintenanceStatus = (truck: any) => {
-        if (!truck.next_service_date) return null;
-        const days = differenceInDays(new Date(truck.next_service_date), new Date());
-        if (days <= 0) return { status: "overdue", label: "Overdue", color: "destructive" };
-        if (days <= 7) return { status: "due_soon", label: "Due Soon", color: "warning" };
-        return { status: "ok", label: "OK", color: "success" };
-    };
-
-    const maintenance = getMaintenanceStatus(truck);
 
     const truckDocs = documents.filter(d => d.entity_id === truck.id && d.entity_type === 'truck');
     const expiredDocs = truckDocs.filter(d => differenceInDays(new Date(d.expiry_date), new Date()) <= 0);
@@ -126,11 +117,6 @@ export default function TruckDetails() {
                                 <Badge variant={truck.is_active ? "default" : "secondary"} className="h-8 px-3">
                                     {truck.is_active ? "Active" : "Inactive"}
                                 </Badge>
-                                {maintenance && (
-                                    <Badge variant={maintenance.color === 'destructive' ? 'destructive' : 'secondary'} className={`h-8 px-3 ${maintenance.color === 'success' ? 'bg-success text-success-foreground' : ''}`}>
-                                        Service: {maintenance.label}
-                                    </Badge>
-                                )}
                             </div>
                         </div>
                     </CardContent>
@@ -153,29 +139,6 @@ export default function TruckDetails() {
                                     <div className="text-2xl font-bold">{truck.capacity_tons} <span className="text-sm font-normal text-muted-foreground">Tons</span></div>
                                 </CardContent>
                             </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium">Mileage</CardTitle>
-                                    <Gauge className="w-4 h-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">{truck.current_mileage?.toLocaleString() ?? 0} <span className="text-sm font-normal text-muted-foreground">km</span></div>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                                    <CardTitle className="text-sm font-medium">Next Service</CardTitle>
-                                    <Wrench className="w-4 h-4 text-muted-foreground" />
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-2xl font-bold">
-                                        {truck.next_service_date ? format(new Date(truck.next_service_date), "MMM d") : "N/A"}
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Interval: {truck.service_interval_km?.toLocaleString()} km
-                                    </p>
-                                </CardContent>
-                            </Card>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -191,14 +154,6 @@ export default function TruckDetails() {
                                         <div>
                                             <span className="text-muted-foreground">Chassis Number</span>
                                             <p className="font-medium">{truck.chassis_number || "-"}</p>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground">Default Fuel Cost</span>
-                                            <p className="font-medium">₦{truck.default_fuel_cost?.toLocaleString() || "0"}</p>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground">Last Service</span>
-                                            <p className="font-medium">{truck.last_service_date ? format(new Date(truck.last_service_date), "MMM d, yyyy") : "-"}</p>
                                         </div>
                                         <div>
                                             <span className="text-muted-foreground">Registration Date</span>

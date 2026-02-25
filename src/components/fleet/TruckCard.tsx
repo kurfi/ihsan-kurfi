@@ -13,7 +13,7 @@ interface TruckCardProps {
     onDelete?: () => void;
 }
 
-export function TruckCard({ truck, docStatus, maintenanceStatus, onEdit, onDelete }: TruckCardProps) {
+export function TruckCard({ truck, docStatus, onEdit, onDelete }: Omit<TruckCardProps, "maintenanceStatus">) {
     const navigate = useNavigate();
 
     return (
@@ -45,27 +45,6 @@ export function TruckCard({ truck, docStatus, maintenanceStatus, onEdit, onDelet
                     <span className="font-medium">{truck.capacity_tons ? `${truck.capacity_tons} Tons` : "-"}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                    <span className="body-small flex items-center gap-1">
-                        <Gauge className="w-3 h-3" /> Mileage:
-                    </span>
-                    <span className="font-medium">{truck.current_mileage?.toLocaleString() ?? "-"} km</span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                    <span className="body-small flex items-center gap-1">
-                        <Wrench className="w-3 h-3" /> Service:
-                    </span>
-                    {maintenanceStatus ? (
-                        <Badge variant={
-                            maintenanceStatus === "overdue" ? "destructive" :
-                                maintenanceStatus === "due_soon" ? "secondary" : "default"
-                        } className={`h-5 px-1.5 ${maintenanceStatus === "ok" ? "bg-success text-success-foreground hover:bg-success/90" : ""}`}>
-                            {maintenanceStatus === "overdue" ? "Overdue" :
-                                maintenanceStatus === "due_soon" ? "Due Soon" : "OK"}
-                        </Badge>
-                    ) : <span>-</span>}
-                </div>
 
                 <div className="pt-2 border-t flex items-center justify-between text-sm">
                     <span className="body-small">Documents:</span>

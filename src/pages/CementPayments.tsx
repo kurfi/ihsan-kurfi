@@ -118,7 +118,7 @@ export default function CementPayments() {
     });
 
     return (
-        <MainLayout title="Cement Payments">
+        <MainLayout>
             <div className="space-y-6 animate-fade-in mobile-spacing">
                 <div className="flex items-center justify-between">
                     <div>
