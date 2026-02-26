@@ -45,7 +45,7 @@ export function DriverWallet({ driverId }: DriverWalletProps) {
         { value: "allowance", label: "Allowance" },
         { value: "bonus", label: "Bonus" },
         { value: "shortage_deduction", label: "Shortage Deduction" },
-        { value: "shortage_deduction", label: "Shortage Deduction" },
+        { value: "damage_deduction", label: "Damage Deductions" },
         { value: "other", label: "Other" },
     ];
 
@@ -66,7 +66,8 @@ export function DriverWallet({ driverId }: DriverWalletProps) {
     };
 
     const balance = transactions.reduce((acc, t) => {
-        if (t.type === 'deposit' || t.type === 'salary_payment' || t.type === 'bonus' || t.type === 'allowance' || t.type === 'other') {
+        const isDeposit = ['deposit', 'salary_payment', 'bonus', 'allowance', 'other'].includes(t.type || '');
+        if (isDeposit) {
             return acc + (t.amount || 0);
         } else {
             return acc - (t.amount || 0);

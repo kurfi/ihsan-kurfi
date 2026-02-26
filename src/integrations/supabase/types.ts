@@ -1208,6 +1208,7 @@ export type Database = {
       shortage_status: "pending" | "approved" | "deducted",
       transaction_type:
       | "shortage_deduction"
+      | "damage_deduction"
       | "allowance"
       | "salary_payment"
       | "bonus"
@@ -1355,6 +1356,7 @@ export const Constants = {
       shortage_status: ["pending", "approved", "deducted"],
       transaction_type: [
         "shortage_deduction",
+        "damage_deduction",
         "allowance",
         "salary_payment",
         "bonus",

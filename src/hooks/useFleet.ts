@@ -45,7 +45,7 @@ export interface DriverTransaction {
   id: string;
   driver_id: string | null;
   order_id: string | null;
-  type: "shortage_deduction" | "allowance" | "salary_payment" | "bonus" | "deposit" | null;
+  type: "shortage_deduction" | "damage_deduction" | "allowance" | "salary_payment" | "bonus" | "deposit" | null;
   amount: number | null;
   description: string | null;
   transaction_date: string | null;
