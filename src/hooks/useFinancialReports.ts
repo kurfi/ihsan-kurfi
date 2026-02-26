@@ -76,9 +76,19 @@ export function useCurrentMonthPL() {
 
 // Helper function to calculate total receivables
 export function useTotalReceivables() {
-    const { data: receivables = [] } = useReceivablesAging();
-    const total = receivables.reduce((sum, r) => sum + r.total_owed, 0);
-    return { total, count: receivables.length };
+    const { data: customers = [] } = useQuery({
+        queryKey: ["customers-receivables"], // Using a separate key to avoid sharing with useCustomers if not needed, but can use "customers" too
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("customers")
+                .select("current_balance")
+                .gt("current_balance", 0);
+            if (error) throw error;
+            return data;
+        },
+    });
+    const total = customers.reduce((sum, c) => sum + (c.current_balance || 0), 0);
+    return { total, count: customers.length };
 }
 
 // Helper function to calculate all-time totals

@@ -31,12 +31,10 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
 
     const [form, setForm] = useState<{
         category: ExpenseCategory;
-        expense_type: string;
         amount: string;
         description: string;
     }>({
         category: "fuel",
-        expense_type: "",
         amount: "",
         description: "",
     });
@@ -53,19 +51,22 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
     ];
 
     const handleAddExpense = () => {
-        if (!truckId || !form.amount || !form.expense_type) return;
+        if (!truckId || !form.amount) return;
+
+        // Auto-generate expense_type from category label
+        const categoryLabel = categories.find(c => c.value === form.category)?.label || form.category;
 
         addExpense.mutate({
             truck_id: truckId,
             category: form.category,
-            expense_type: form.expense_type,
+            expense_type: categoryLabel,
             amount: parseFloat(form.amount),
             description: form.description,
             order_id: null,
         }, {
             onSuccess: () => {
                 setIsDialogOpen(false);
-                setForm({ category: "fuel", expense_type: "", amount: "", description: "" });
+                setForm({ category: "fuel", amount: "", description: "" });
             }
         });
     };
@@ -106,14 +107,6 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Expense Type (Short Title) *</Label>
-                                <Input
-                                    value={form.expense_type}
-                                    onChange={(e) => setForm({ ...form, expense_type: e.target.value })}
-                                    placeholder="e.g. Engine Oil Change, Fuel Refill"
-                                />
-                            </div>
-                            <div className="space-y-2">
                                 <Label>Amount (₦) *</Label>
                                 <Input
                                     type="number"
@@ -127,7 +120,7 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
                                 <Input
                                     value={form.description}
                                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                    placeholder="Additional details..."
+                                    placeholder="Additional details (Optional)..."
                                 />
                             </div>
                             <Button onClick={handleAddExpense} className="w-full" disabled={addExpense.isPending}>
@@ -151,7 +144,6 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
                                 <TableRow>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Category</TableHead>
-                                    <TableHead>Type</TableHead>
                                     <TableHead>Description</TableHead>
                                     <TableHead className="text-right">Amount</TableHead>
                                 </TableRow>
@@ -159,7 +151,7 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
                             <TableBody>
                                 {expenses.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                                             No expense records found for this truck
                                         </TableCell>
                                     </TableRow>
@@ -167,13 +159,12 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
                                     expenses.map((e) => (
                                         <TableRow key={e.id}>
                                             <TableCell>{format(new Date(e.created_at), 'MMM d, yyyy')}</TableCell>
-                                            <TableCell className="capitalize">
+                                            <TableCell className="capitalize font-medium">
                                                 <span className="px-2 py-1 rounded-full text-xs bg-muted">
-                                                    {e.category?.replace('_', ' ')}
+                                                    {e.expense_type || e.category?.replace('_', ' ')}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="font-medium">{e.expense_type}</TableCell>
-                                            <TableCell className="max-w-[200px] truncate">{e.description || '-'}</TableCell>
+                                            <TableCell className="max-w-[300px] truncate">{e.description || '-'}</TableCell>
                                             <TableCell className="text-right font-bold text-destructive">
                                                 ₦{e.amount.toLocaleString()}
                                             </TableCell>

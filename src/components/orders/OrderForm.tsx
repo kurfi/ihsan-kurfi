@@ -32,13 +32,15 @@ interface OrderFormProps {
     onOpenChange: (open: boolean) => void;
 }
 
+const EMPTY_ARRAY: any[] = [];
+
 export function OrderForm({ open, onOpenChange }: OrderFormProps) {
     const { toast } = useToast();
     const createOrder = useCreateOrder();
-    const { data: customers = [] } = useCustomers();
-    const { data: depots = [] } = useDepots();
-    const { data: products = [] } = useProducts();
-    const { data: suppliers = [] } = useSuppliers();
+    const { data: customers = EMPTY_ARRAY } = useCustomers();
+    const { data: depots = EMPTY_ARRAY } = useDepots();
+    const { data: products = EMPTY_ARRAY } = useProducts();
+    const { data: suppliers = EMPTY_ARRAY } = useSuppliers();
 
     const [form, setForm] = useState({
         customer_id: "",
