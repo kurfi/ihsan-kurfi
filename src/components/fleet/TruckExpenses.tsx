@@ -44,8 +44,8 @@ export function TruckExpenses({ truckId }: TruckExpensesProps) {
     const categories = [
         { value: "fuel", label: "Fuel" },
         { value: "maintenance", label: "Maintenance" },
+        { value: "engine_oil_change", label: "Engine Oil Change" },
         { value: "toll", label: "Toll" },
-        { value: "salary", label: "Salary" },
         { value: "insurance", label: "Insurance" },
         { value: "license", label: "License" },
         { value: "office", label: "Office" },

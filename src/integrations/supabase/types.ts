@@ -1188,8 +1188,8 @@ export type Database = {
       | "fuel"
       | "driver_allowance"
       | "toll"
-      | "salary"
       | "maintenance"
+      | "engine_oil_change"
       | "insurance"
       | "license"
       | "office"
@@ -1333,8 +1333,8 @@ export const Constants = {
         "fuel",
         "driver_allowance",
         "toll",
-        "salary",
         "maintenance",
+        "engine_oil_change",
         "insurance",
         "license",
         "office",
