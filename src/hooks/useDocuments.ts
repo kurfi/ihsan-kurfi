@@ -23,27 +23,14 @@ export function useDocuments(options?: { enabled?: boolean }) {
     staleTime: 600_000, // 10 minutes — document statuses change infrequently
     enabled: options?.enabled ?? true,
     queryFn: async () => {
-      // Single query using Supabase nested selects — eliminates 2 extra round-trips
       const { data, error } = await supabase
         .from("documents")
-        .select(`
-          *,
-          truck:trucks!left(id, plate_number),
-          driver:drivers!left(id, name)
-        `)
+        .select("*")
         .order("expiry_date", { ascending: true });
 
       if (error) throw error;
 
-      return data.map((doc: any) => ({
-        ...doc,
-        entity_name:
-          doc.entity_type === "truck"
-            ? doc.truck?.plate_number
-            : doc.driver?.name,
-        truck: undefined,
-        driver: undefined,
-      })) as Document[];
+      return data as Document[];
     },
   });
 }

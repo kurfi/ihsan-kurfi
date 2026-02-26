@@ -317,8 +317,8 @@ export default function Fleet() {
       guarantor_name: driver.guarantor_name || "",
       guarantor_phone: driver.guarantor_phone || "",
       guarantor_address: driver.guarantor_address || "",
-      license_number: driverForm.license_number || "",
-      license_class: driverForm.license_class || "",
+      license_number: driver.license_number || "",
+      license_class: driver.license_class || "",
       standard_allowance: driver.standard_allowance?.toString() || "",
     });
     setEditDriverDialogOpen(true);
@@ -410,7 +410,12 @@ export default function Fleet() {
     return 0;
   });
 
-  const filteredDocuments = documents.filter(doc =>
+  const filteredDocuments = documents.map(doc => ({
+    ...doc,
+    entity_name: doc.entity_type === "truck"
+      ? trucks.find(t => t.id === doc.entity_id)?.plate_number
+      : drivers.find(d => d.id === doc.entity_id)?.name
+  })).filter(doc =>
     doc.document_type.toLowerCase().includes(docSearch.toLowerCase()) ||
     (doc.entity_name && doc.entity_name.toLowerCase().includes(docSearch.toLowerCase())) ||
     (doc.document_number && doc.document_number.toLowerCase().includes(docSearch.toLowerCase()))
@@ -606,7 +611,6 @@ export default function Fleet() {
                         <TableBody>
                           {sortedTrucks.map((truck) => {
                             const docStatus = getDocumentStatus(truck.id, "truck");
-                            const maintenanceStatus = getMaintenanceStatus(truck);
                             return (
                               <TableRow key={truck.id}>
                                 <TableCell className="font-medium">{truck.plate_number}</TableCell>
@@ -628,17 +632,6 @@ export default function Fleet() {
                                       <Gauge className="w-3 h-3" />
                                       {truck.current_mileage.toLocaleString()} km
                                     </span>
-                                  ) : "-"}
-                                </TableCell>
-                                <TableCell>
-                                  {maintenanceStatus ? (
-                                    <Badge variant={
-                                      maintenanceStatus === "overdue" ? "destructive" :
-                                        maintenanceStatus === "due_soon" ? "secondary" : "default"
-                                    } className={maintenanceStatus === "ok" ? "bg-success text-success-foreground" : ""}>
-                                      {maintenanceStatus === "overdue" ? "Overdue" :
-                                        maintenanceStatus === "due_soon" ? "Due Soon" : "OK"}
-                                    </Badge>
                                   ) : "-"}
                                 </TableCell>
                                 <TableCell>
