@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCementPaymentsToDangote, useAddCementPaymentToDangote, useDeleteCementPayment } from "@/hooks/useCementPayments";
-import { useSuppliers, useWallets } from "@/hooks/usePurchases";
-import { Plus, Banknote, Trash2, Wallet, Search } from "lucide-react";
+import { useSuppliers, useWallets, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from "@/hooks/usePurchases";
+import { Plus, Banknote, Trash2, Wallet, Search, Settings2, Edit2 } from "lucide-react";
 import { format } from "date-fns";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -35,7 +35,15 @@ export default function CementPayments() {
     const { data: suppliers = [] } = useSuppliers();
     const addPayment = useAddCementPaymentToDangote();
     const deletePayment = useDeleteCementPayment();
+    const createSupplier = useCreateSupplier();
+    const updateSupplier = useUpdateSupplier();
+    const deleteSupplier = useDeleteSupplier();
+
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [manageSuppliersOpen, setManageSuppliersOpen] = useState(false);
+    const [editingSupplier, setEditingSupplier] = useState<any>(null);
+    const [supplierForm, setSupplierForm] = useState({ name: "", contact_person: "", phone: "", email: "", address: "" });
+
     const [paymentSortBy, setPaymentSortBy] = useState("date_desc");
     const [form, setForm] = useState({
         supplier_id: "",
@@ -83,6 +91,34 @@ export default function CementPayments() {
     const handleDelete = (id: string, reference: string) => {
         if (confirm(`Delete payment ${reference}? This action cannot be undone.`)) {
             deletePayment.mutate(id);
+        }
+    };
+
+    const handleSupplierSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingSupplier) {
+            await updateSupplier.mutateAsync({ id: editingSupplier.id, ...supplierForm });
+            setEditingSupplier(null);
+        } else {
+            await createSupplier.mutateAsync(supplierForm);
+        }
+        setSupplierForm({ name: "", contact_person: "", phone: "", email: "", address: "" });
+    };
+
+    const handleEditSupplier = (supplier: any) => {
+        setEditingSupplier(supplier);
+        setSupplierForm({
+            name: supplier.name || "",
+            contact_person: supplier.contact_person || "",
+            phone: supplier.phone || "",
+            email: supplier.email || "",
+            address: supplier.address || "",
+        });
+    };
+
+    const handleDeleteSupplier = (id: string, name: string) => {
+        if (confirm(`Are you sure you want to delete manufacturer "${name}"? This may affect existing records.`)) {
+            deleteSupplier.mutate(id);
         }
     };
 
@@ -186,22 +222,6 @@ export default function CementPayments() {
                                     </Select>
                                 </div>
 
-                                {form.payment_type === 'prepayment' && (
-                                    <div>
-                                        <Label>Cement Type</Label>
-                                        <Select value={form.cement_type} onValueChange={(value) => setForm({ ...form, cement_type: value })}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select cement type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="Dangote 42.5R">Dangote 42.5R</SelectItem>
-                                                <SelectItem value="Dangote 32.5N">Dangote 32.5N</SelectItem>
-                                                <SelectItem value="BUA 42.5R">BUA 42.5R</SelectItem>
-                                                <SelectItem value="Other">Other</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                )}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
@@ -257,6 +277,137 @@ export default function CementPayments() {
                                     {addPayment.isPending ? "Recording..." : "Record Payment"}
                                 </Button>
                             </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={manageSuppliersOpen} onOpenChange={setManageSuppliersOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline">
+                                <Settings2 className="h-4 w-4 mr-2" />
+                                Manage Manufacturers
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Manage Manufacturers</DialogTitle>
+                                <DialogDescription>Add, edit or remove cement manufacturers.</DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-6 py-4">
+                                <form onSubmit={handleSupplierSubmit} className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                                    <h4 className="text-sm font-semibold">{editingSupplier ? "Edit Manufacturer" : "Add New Manufacturer"}</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label htmlFor="name">Manufacturer Name</Label>
+                                            <Input
+                                                id="name"
+                                                value={supplierForm.name}
+                                                onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })}
+                                                placeholder="e.g. Dangote Cement"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="contact">Contact Person</Label>
+                                            <Input
+                                                id="contact"
+                                                value={supplierForm.contact_person}
+                                                onChange={(e) => setSupplierForm({ ...supplierForm, contact_person: e.target.value })}
+                                                placeholder="Director of Sales"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="phone">Phone Number</Label>
+                                            <Input
+                                                id="phone"
+                                                value={supplierForm.phone}
+                                                onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })}
+                                                placeholder="080..."
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label htmlFor="email">Email Address</Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={supplierForm.email}
+                                                onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })}
+                                                placeholder="info@manufacturer.com"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="address">Address</Label>
+                                        <Input
+                                            id="address"
+                                            value={supplierForm.address}
+                                            onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })}
+                                            placeholder="Headquarters location"
+                                        />
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-2">
+                                        {editingSupplier && (
+                                            <Button type="button" variant="ghost" onClick={() => {
+                                                setEditingSupplier(null);
+                                                setSupplierForm({ name: "", contact_person: "", phone: "", email: "", address: "" });
+                                            }}>
+                                                Cancel
+                                            </Button>
+                                        )}
+                                        <Button type="submit" disabled={createSupplier.isPending || updateSupplier.isPending}>
+                                            {editingSupplier ? "Update" : "Add Manufacturer"}
+                                        </Button>
+                                    </div>
+                                </form>
+
+                                <div className="max-h-[300px] overflow-y-auto">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Manufacturer</TableHead>
+                                                <TableHead>Contact</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {suppliers.map((s) => (
+                                                <TableRow key={s.id}>
+                                                    <TableCell className="font-medium">{s.name}</TableCell>
+                                                    <TableCell>
+                                                        <div className="text-xs">{s.contact_person || "-"}</div>
+                                                        <div className="text-[10px] text-muted-foreground">{s.phone}</div>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => handleEditSupplier(s)}
+                                                            >
+                                                                <Edit2 className="w-3 h-3" />
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => handleDeleteSupplier(s.id, s.name)}
+                                                                className="text-destructive hover:text-destructive"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            {suppliers.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                                        No manufacturers found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
                         </DialogContent>
                     </Dialog>
                 </div>
