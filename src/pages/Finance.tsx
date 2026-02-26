@@ -43,6 +43,7 @@ import { format, differenceInDays } from "date-fns";
 import { PaymentCard } from "@/components/finance/PaymentCard";
 import { ExpenseCard } from "@/components/finance/ExpenseCard";
 import { HaulagePaymentDialog } from "@/components/orders/HaulagePaymentDialog";
+import { formatCurrency } from "@/lib/utils";
 
 export default function Finance() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -137,15 +138,6 @@ export default function Finance() {
   };
 
   const aging = getAgingData();
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const handleAddPayment = () => {
     if ((paymentForm.payment_method === 'transfer' || paymentForm.payment_method === 'pos') && !paymentForm.payment_account_id) {

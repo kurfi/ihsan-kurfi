@@ -75,17 +75,13 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
             let salePrice = 0;
             let costPrice = 0;
 
-            // Always use bag price as the base
-            const baseCostPrice = matchingProduct.cost_price_bag || 0;
-            const baseSalePrice = matchingProduct.selling_price_bag || baseCostPrice;
-
             if (form.unit === "tons") {
-                // 1 Ton = 20 Bags
-                costPrice = baseCostPrice * 20;
-                salePrice = baseSalePrice * 20;
+                // Try to use cost_price_ton, fallback to bag price * 20
+                costPrice = matchingProduct.cost_price_ton || (matchingProduct.cost_price_bag || 0) * 20;
+                salePrice = matchingProduct.selling_price_ton || (matchingProduct.selling_price_bag || matchingProduct.cost_price_bag || 0) * 20;
             } else {
-                costPrice = baseCostPrice;
-                salePrice = baseSalePrice;
+                costPrice = matchingProduct.cost_price_bag || 0;
+                salePrice = matchingProduct.selling_price_bag || costPrice;
             }
 
             setAutomatedPricing({
@@ -95,7 +91,7 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         } else {
             setAutomatedPricing({ purchase_price: 0, sale_price: 0 });
         }
-    }, [form.customer_id, form.depot_id, form.cement_type, products, customers]);
+    }, [form.customer_id, form.depot_id, form.cement_type, form.unit, products, customers]);
 
     const resetForm = () => {
         setForm({

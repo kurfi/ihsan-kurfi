@@ -4,3 +4,13 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function formatCurrency(amount: number, compact = false) {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: compact ? 1 : 0,
+    notation: compact ? 'compact' : 'standard',
+  }).format(amount);
+}
