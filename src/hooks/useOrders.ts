@@ -353,14 +353,16 @@ export function useDeleteOrder() {
       */
 
       // 3. Delete linked records (expenses, payments, etc.) that might block deletion
-
-      // 3. Delete linked records (expenses, payments, etc.) that might block deletion
       // Constraints found earlier: expenses, payments, shortages, driver_transactions
       await supabase.from("expenses").delete().eq("order_id", order.id);
       await supabase.from("payments").delete().eq("order_id", order.id);
       await supabase.from("shortages").delete().eq("order_id", order.id);
       await supabase.from("driver_transactions").delete().eq("order_id", order.id);
       await supabase.from("credit_notes").delete().eq("order_id", order.id);
+
+      // Unlink purchases where this order is either the sales_order_id or linked_customer_order_id
+      await supabase.from("purchases").update({ sales_order_id: null }).eq("sales_order_id", order.id);
+      await supabase.from("purchases").update({ linked_customer_order_id: null }).eq("linked_customer_order_id", order.id);
 
       // 4. Delete the order
       const { error } = await supabase

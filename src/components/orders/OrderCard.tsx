@@ -80,7 +80,7 @@ export function OrderCard({
                     <Printer className="w-4 h-4 mr-2" /> Print Manifest
                   </DropdownMenuItem>
                 )}
-                {order.status === 'requested' && (
+                {order.status !== 'delivered' && (
                   <>
                     <DropdownMenuItem onClick={() => onAction('edit', order.id)}>
                       <Edit className="w-4 h-4 mr-2" /> Edit Order

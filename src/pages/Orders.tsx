@@ -15,13 +15,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -482,7 +488,9 @@ export default function Orders() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleOrderAction('view', order.id)}>Details</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleOrderAction('edit', order.id)}>Edit</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOrderAction('delete', order.id)} className="text-destructive">Delete</DropdownMenuItem>
+                                {order.status !== 'delivered' && (
+                                  <DropdownMenuItem onClick={() => handleOrderAction('delete', order.id)} className="text-destructive">Delete</DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -590,6 +598,37 @@ export default function Orders() {
 
         {/* Reconciliation Dialog */}
         <ReconciliationDialog open={reconciliationOpen} onOpenChange={setReconciliationOpen} order={orders.find(o => o.id === selectedOrder) || null} onConfirm={handleReconciliation} />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the order
+                {orderToDelete?.order_number && ` ${orderToDelete.order_number}`} and all associated records.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setOrderToDelete(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => {
+                  if (orderToDelete) {
+                    deleteOrder.mutate(orderToDelete, {
+                      onSuccess: () => {
+                        setDeleteDialogOpen(false);
+                        setOrderToDelete(null);
+                      }
+                    });
+                  }
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );
