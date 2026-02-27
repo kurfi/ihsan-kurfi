@@ -23,6 +23,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+import {
   Table,
   TableBody,
   TableCell,
@@ -125,6 +136,15 @@ export default function Fleet() {
   const [editingTruckId, setEditingTruckId] = useState<string | null>(null);
   const [editingDriverId, setEditingDriverId] = useState<string | null>(null);
   const [editingDocId, setEditingDocId] = useState<string | null>(null);
+
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    actionLabel?: string;
+    onConfirm: () => void;
+  }>({ title: "", description: "", onConfirm: () => { } });
+
 
   const formatDocType = (type: string) => {
     return type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -300,9 +320,15 @@ export default function Fleet() {
   };
 
   const handleDeleteTruck = (id: string, plate: string) => {
-    if (!confirm(`Are you sure you want to deactivate truck ${plate}?`)) return;
-    deleteTruck.mutate(id);
+    setConfirmConfig({
+      title: "Deactivate Truck",
+      description: `Are you sure you want to deactivate truck ${plate}?`,
+      actionLabel: "Deactivate",
+      onConfirm: () => deleteTruck.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
+
 
   const handleOpenEditDriver = (driver: typeof drivers[0]) => {
     setEditingDriverId(driver.id);
@@ -354,9 +380,15 @@ export default function Fleet() {
   };
 
   const handleDeleteDriver = (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to deactivate driver ${name}?`)) return;
-    deleteDriver.mutate(id);
+    setConfirmConfig({
+      title: "Deactivate Driver",
+      description: `Are you sure you want to deactivate driver ${name}?`,
+      actionLabel: "Deactivate",
+      onConfirm: () => deleteDriver.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
+
 
   const expiringDocs = documents.filter((doc) => {
     const days = differenceInDays(new Date(doc.expiry_date), new Date());

@@ -5,6 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,6 +54,13 @@ export default function Products() {
   const [editItemOpen, setEditItemOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [productSearch, setProductSearch] = useState("");
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ title: "", description: "", onConfirm: () => { } });
+
 
 
   // Handlers
@@ -144,15 +162,21 @@ export default function Products() {
   };
 
   const handleDeleteItem = (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      deleteProduct.mutate(id);
-    }
+    setConfirmConfig({
+      title: "Delete Product",
+      description: "Are you sure you want to delete this product? This action cannot be undone.",
+      onConfirm: () => deleteProduct.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
 
   const handleDeleteDepot = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete depot ${name}? All items in it will be lost.`)) {
-      deleteDepot.mutate(id);
-    }
+    setConfirmConfig({
+      title: "Delete Source",
+      description: `Are you sure you want to delete source ${name}? All items in it will be lost. This action cannot be undone.`,
+      onConfirm: () => deleteDepot.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
 
   // Group products by depot and sort
@@ -523,6 +547,31 @@ export default function Products() {
           </div>
         </DialogContent>
       </Dialog>
+      </Dialog >
+
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                confirmConfig.onConfirm();
+                setConfirmDialogOpen(false);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout >
+
   );
 }

@@ -39,6 +39,8 @@ import { usePayments } from "@/hooks/useFinance";
 import { Plus, Users, AlertCircle, TrendingUp, Banknote, Ban, Check, FileText, Pencil, Search } from "lucide-react";
 import { format } from "date-fns";
 import { generateStatementOfAccount, printDocument, StatementData } from "@/lib/documentGenerator";
+import { toast } from "sonner";
+
 
 export default function Customers() {
   const { data: customers = [], isLoading } = useCustomers();
@@ -219,7 +221,7 @@ export default function Customers() {
       printDocument(generateStatementOfAccount(statementData));
     } catch (error) {
       console.error("Error generating statement:", error);
-      alert("Failed to generate statement. Please try again.");
+      toast.error("Failed to generate statement. Please try again.");
     }
   };
 

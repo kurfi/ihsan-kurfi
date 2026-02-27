@@ -6,13 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCementPaymentsToDangote, useAddCementPaymentToDangote, useDeleteCementPayment } from "@/hooks/useCementPayments";
 import { useSuppliers, useWallets, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from "@/hooks/usePurchases";
@@ -60,6 +67,14 @@ export default function CementPayments() {
     const [paymentSearch, setPaymentSearch] = useState("");
     const [walletSearch, setWalletSearch] = useState("");
 
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+    const [confirmConfig, setConfirmConfig] = useState<{
+        title: string;
+        description: string;
+        onConfirm: () => void;
+    }>({ title: "", description: "", onConfirm: () => { } });
+
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -89,10 +104,14 @@ export default function CementPayments() {
     };
 
     const handleDelete = (id: string, reference: string) => {
-        if (confirm(`Delete payment ${reference}? This action cannot be undone.`)) {
-            deletePayment.mutate(id);
-        }
+        setConfirmConfig({
+            title: "Delete Payment",
+            description: `Delete payment ${reference}? This action cannot be undone.`,
+            onConfirm: () => deletePayment.mutate(id),
+        });
+        setConfirmDialogOpen(true);
     };
+
 
     const handleSupplierSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -117,10 +136,14 @@ export default function CementPayments() {
     };
 
     const handleDeleteSupplier = (id: string, name: string) => {
-        if (confirm(`Are you sure you want to delete manufacturer "${name}"? This may affect existing records.`)) {
-            deleteSupplier.mutate(id);
-        }
+        setConfirmConfig({
+            title: "Delete Manufacturer",
+            description: `Are you sure you want to delete manufacturer "${name}"? This may affect existing records.`,
+            onConfirm: () => deleteSupplier.mutate(id),
+        });
+        setConfirmDialogOpen(true);
     };
+
 
     const totalPaid = payments.reduce((sum, p) => sum + p.amount_paid, 0);
     const paymentsThisMonth = payments.filter(p =>
@@ -596,6 +619,30 @@ export default function CementPayments() {
                     </CardContent>
                 </Card>
             </div>
+
+            <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{confirmConfig.title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {confirmConfig.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                                confirmConfig.onConfirm();
+                                setConfirmDialogOpen(false);
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </MainLayout>
     );
 }
+

@@ -19,13 +19,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import {
   Table,
   TableBody,
@@ -44,6 +51,8 @@ import { PaymentCard } from "@/components/finance/PaymentCard";
 import { ExpenseCard } from "@/components/finance/ExpenseCard";
 import { HaulagePaymentDialog } from "@/components/orders/HaulagePaymentDialog";
 import { formatCurrency } from "@/lib/utils";
+import { toast } from "sonner";
+
 
 export default function Finance() {
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -93,6 +102,14 @@ export default function Finance() {
   const [expenseSearch, setExpenseSearch] = useState("");
   const [accountSearch, setAccountSearch] = useState("");
 
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string;
+    onConfirm: () => void;
+  }>({ title: "", description: "", onConfirm: () => { } });
+
+
 
   const { data: payments = [], isLoading: loadingPayments } = usePayments();
   const { data: expenses = [], isLoading: loadingExpenses } = useExpenses();
@@ -141,7 +158,7 @@ export default function Finance() {
 
   const handleAddPayment = () => {
     if ((paymentForm.payment_method === 'transfer' || paymentForm.payment_method === 'pos') && !paymentForm.payment_account_id) {
-      alert("Please select a destination account for Transfer/POS payments.");
+      toast.error("Please select a destination account for Transfer/POS payments.");
       return;
     }
 
@@ -243,9 +260,14 @@ export default function Finance() {
   };
 
   const handleDeletePayment = (id: string) => {
-    if (!confirm("Are you sure you want to delete this payment? This cannot be undone.")) return;
-    deletePayment.mutate(id);
+    setConfirmConfig({
+      title: "Delete Payment",
+      description: "Are you sure you want to delete this payment? This cannot be undone.",
+      onConfirm: () => deletePayment.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
+
 
   const handleOpenEditExpense = (expense: typeof expenses[0]) => {
     setEditingExpenseId(expense.id);
@@ -287,9 +309,14 @@ export default function Finance() {
   };
 
   const handleDeleteExpense = (id: string) => {
-    if (!confirm("Are you sure you want to delete this expense? This cannot be undone.")) return;
-    deleteExpense.mutate(id);
+    setConfirmConfig({
+      title: "Delete Expense",
+      description: "Are you sure you want to delete this expense? This cannot be undone.",
+      onConfirm: () => deleteExpense.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
+
 
   const handleOpenEditAccount = (account: typeof paymentAccounts[0]) => {
     setEditingAccountId(account.id);
@@ -320,9 +347,14 @@ export default function Finance() {
   };
 
   const handleDeleteAccount = (id: string) => {
-    if (!confirm("Are you sure you want to delete this account? This cannot be undone.")) return;
-    deleteAccount.mutate(id);
+    setConfirmConfig({
+      title: "Delete Account",
+      description: "Are you sure you want to delete this account? This cannot be undone.",
+      onConfirm: () => deleteAccount.mutate(id),
+    });
+    setConfirmDialogOpen(true);
   };
+
 
   const handleOpenLedger = (id: string) => {
     setViewingAccountId(id);
@@ -1420,8 +1452,29 @@ export default function Finance() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-    </MainLayout>
-  );
+          <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{confirmConfig.title}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {confirmConfig.description}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className={confirmConfig.actionLabel === 'Renew' ? "" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
+                  onClick={() => {
+                    confirmConfig.onConfirm();
+                    setConfirmDialogOpen(false);
+                  }}
+                >
+                  {confirmConfig.actionLabel || "Confirm"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </MainLayout>
+
+        );
 }
