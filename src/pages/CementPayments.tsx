@@ -132,12 +132,24 @@ export default function CementPayments() {
         (wallet.cement_type && wallet.cement_type.toLowerCase().includes(walletSearch.toLowerCase()))
     );
 
-    const filteredPayments = payments.filter(payment =>
-        (payment.payment_reference && payment.payment_reference.toLowerCase().includes(paymentSearch.toLowerCase())) ||
-        (payment.cement_type && payment.cement_type.toLowerCase().includes(paymentSearch.toLowerCase())) ||
-        ((payment as any).supplier?.name && (payment as any).supplier.name.toLowerCase().includes(paymentSearch.toLowerCase())) ||
-        (payment.period_covered && payment.period_covered.toLowerCase().includes(paymentSearch.toLowerCase()))
-    );
+    const filteredPayments = payments.filter(payment => {
+        if (!paymentSearch) return true;
+
+        const searchLower = paymentSearch.toLowerCase();
+        const reference = payment.payment_reference?.toLowerCase() || "";
+        const cementType = payment.cement_type?.toLowerCase() || "";
+        const supplierName = (payment as any).supplier?.name?.toLowerCase() || "";
+        const period = payment.period_covered?.toLowerCase() || "";
+        const notes = payment.notes?.toLowerCase() || "";
+        const type = payment.payment_type?.toLowerCase() || "";
+
+        return reference.includes(searchLower) ||
+            cementType.includes(searchLower) ||
+            supplierName.includes(searchLower) ||
+            period.includes(searchLower) ||
+            notes.includes(searchLower) ||
+            type.includes(searchLower);
+    });
 
     const sortedPayments = [...filteredPayments].sort((a, b) => {
 
