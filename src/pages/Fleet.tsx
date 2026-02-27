@@ -500,11 +500,9 @@ export default function Fleet() {
                   </SelectContent>
                 </Select>
                 <Dialog open={truckDialogOpen} onOpenChange={setTruckDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gradient-primary size-sm mobile-compact">
-                      <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Add Truck</span><span className="sm:hidden">Add</span>
-                    </Button>
-                  </DialogTrigger>
+                  <Button className="gradient-primary size-sm mobile-compact" onClick={() => setTruckDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Add Truck</span><span className="sm:hidden">Add</span>
+                  </Button>
                   <DialogContent className="max-w-2xl max-h-[90vh]">
                     <DialogHeader>
                       <DialogTitle>Add New Truck</DialogTitle>
@@ -750,11 +748,9 @@ export default function Fleet() {
                   </SelectContent>
                 </Select>
                 <Dialog open={driverDialogOpen} onOpenChange={setDriverDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className="gradient-primary size-sm mobile-compact">
-                      <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Add Driver</span><span className="sm:hidden">Add</span>
-                    </Button>
-                  </DialogTrigger>
+                  <Button className="gradient-primary size-sm mobile-compact" onClick={() => setDriverDialogOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Add Driver</span><span className="sm:hidden">Add</span>
+                  </Button>
                   <DialogContent className="max-w-2xl max-h-[90vh]">
                     <DialogHeader>
                       <DialogTitle>Add New Driver</DialogTitle>

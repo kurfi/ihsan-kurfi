@@ -311,11 +311,9 @@ export default function Customers() {
                 </SelectContent>
               </Select>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="gradient-primary">
-                    <Plus className="w-4 h-4 mr-2" /> Add Customer
-                  </Button>
-                </DialogTrigger>
+                <Button className="gradient-primary" onClick={() => setDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" /> Add Customer
+                </Button>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Add New Customer</DialogTitle>

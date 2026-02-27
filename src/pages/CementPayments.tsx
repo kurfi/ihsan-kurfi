@@ -199,12 +199,10 @@ export default function CementPayments() {
                         </p>
                     </div>
                     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Record Payment
-                            </Button>
-                        </DialogTrigger>
+                        <Button onClick={() => setDialogOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Record Payment
+                        </Button>
                         <DialogContent className="max-w-md">
                             <DialogHeader>
                                 <DialogTitle>Record Payment to Manufacturer</DialogTitle>
@@ -316,12 +314,10 @@ export default function CementPayments() {
                     </Dialog>
 
                     <Dialog open={manageSuppliersOpen} onOpenChange={setManageSuppliersOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="outline">
-                                <Settings2 className="h-4 w-4 mr-2" />
-                                Manage Manufacturers
-                            </Button>
-                        </DialogTrigger>
+                        <Button variant="outline" onClick={() => setManageSuppliersOpen(true)}>
+                            <Settings2 className="h-4 w-4 mr-2" />
+                            Manage Manufacturers
+                        </Button>
                         <DialogContent className="max-w-2xl">
                             <DialogHeader>
                                 <DialogTitle>Manage Manufacturers</DialogTitle>
