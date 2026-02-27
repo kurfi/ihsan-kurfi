@@ -1445,6 +1445,12 @@ export default function Finance() {
                   </TableBody>
                 </Table>
               </ResponsiveTable>
+            ) : (
+              <EmptyState
+                icon={Receipt}
+                title="No payments found"
+                description="This account hasn't received any confirmed payments yet."
+              />
             )}
           </div>
         </DialogContent>
