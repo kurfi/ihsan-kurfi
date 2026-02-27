@@ -343,142 +343,140 @@ export default function Products() {
           ))
         )}
       </div>
-    </div>
 
+      {/* Add Source Dialog */}
+      <Dialog open={addDepotOpen} onOpenChange={setAddDepotOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Source Location</DialogTitle>
+            <DialogDescription>Add a manufacturing plant or depot.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Source Name</Label>
+              <Input
+                value={depotForm.name}
+                onChange={(e) => setDepotForm({ ...depotForm, name: e.target.value })}
+                placeholder="e.g. Dangote Plant Obajana"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Location / Address</Label>
+              <Input
+                value={depotForm.address}
+                onChange={(e) => setDepotForm({ ...depotForm, address: e.target.value })}
+                placeholder="Address or City"
+              />
+            </div>
+            <LoadingButton onClick={handleAddDepot} isLoading={addDepot.isPending} className="w-full">
+              Add Source
+            </LoadingButton>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-    {/* Add Source Dialog */ }
-  <Dialog open={addDepotOpen} onOpenChange={setAddDepotOpen}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Add Source Location</DialogTitle>
-        <DialogDescription>Add a manufacturing plant or depot.</DialogDescription>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Label>Source Name</Label>
-          <Input
-            value={depotForm.name}
-            onChange={(e) => setDepotForm({ ...depotForm, name: e.target.value })}
-            placeholder="e.g. Dangote Plant Obajana"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Location / Address</Label>
-          <Input
-            value={depotForm.address}
-            onChange={(e) => setDepotForm({ ...depotForm, address: e.target.value })}
-            placeholder="Address or City"
-          />
-        </div>
-        <LoadingButton onClick={handleAddDepot} isLoading={addDepot.isPending} className="w-full">
-          Add Source
-        </LoadingButton>
-      </div>
-    </DialogContent>
-  </Dialog>
+      {/* Edit Source Dialog */}
+      <Dialog open={editDepotOpen} onOpenChange={setEditDepotOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Source Location</DialogTitle>
+            <DialogDescription>Update the name and location of this plant or depot.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Source Name</Label>
+              <Input
+                value={depotForm.name}
+                onChange={(e) => setDepotForm({ ...depotForm, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Location / Address</Label>
+              <Input
+                value={depotForm.address}
+                onChange={(e) => setDepotForm({ ...depotForm, address: e.target.value })}
+              />
+            </div>
+            <LoadingButton onClick={handleEditDepot} isLoading={updateDepot.isPending} className="w-full">
+              Save Changes
+            </LoadingButton>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-  {/* Edit Source Dialog */ }
-  <Dialog open={editDepotOpen} onOpenChange={setEditDepotOpen}>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Edit Source Location</DialogTitle>
-        <DialogDescription>Update the name and location of this plant or depot.</DialogDescription>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Label>Source Name</Label>
-          <Input
-            value={depotForm.name}
-            onChange={(e) => setDepotForm({ ...depotForm, name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>Location / Address</Label>
-          <Input
-            value={depotForm.address}
-            onChange={(e) => setDepotForm({ ...depotForm, address: e.target.value })}
-          />
-        </div>
-        <LoadingButton onClick={handleEditDepot} isLoading={updateDepot.isPending} className="w-full">
-          Save Changes
-        </LoadingButton>
-      </div>
-    </DialogContent>
-  </Dialog>
+      {/* Add Product Dialog */}
+      <Dialog open={addItemOpen} onOpenChange={setAddItemOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Product to Source</DialogTitle>
+            <DialogDescription>Configure pricing for a new product at this location.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label>Product / Cement Type</Label>
+              <Input
+                value={itemForm.cement_type}
+                onChange={(e) => setItemForm({ ...itemForm, cement_type: e.target.value })}
+                placeholder="e.g. Dangote 42.5"
+              />
+            </div>
 
-  {/* Add Product Dialog */ }
-  <Dialog open={addItemOpen} onOpenChange={setAddItemOpen}>
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>Add Product to Source</DialogTitle>
-        <DialogDescription>Configure pricing for a new product at this location.</DialogDescription>
-      </DialogHeader>
-      <div className="space-y-6 py-4">
-        <div className="space-y-2">
-          <Label>Product / Cement Type</Label>
-          <Input
-            value={itemForm.cement_type}
-            onChange={(e) => setItemForm({ ...itemForm, cement_type: e.target.value })}
-            placeholder="e.g. Dangote 42.5"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Ton Pricing</h3>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label className="text-xs">Supplier Cost (per Ton) - Auto Calculated</Label>
-                <Input type="number" value={itemForm.cost_price_ton} readOnly className="bg-muted" placeholder="0" />
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Ton Pricing</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Supplier Cost (per Ton) - Auto Calculated</Label>
+                    <Input type="number" value={itemForm.cost_price_ton} readOnly className="bg-muted" placeholder="0" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Selling Price (per Ton) - Auto Calculated</Label>
+                    <Input type="number" value={itemForm.selling_price_ton} readOnly className="bg-muted" placeholder="0" />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Selling Price (per Ton) - Auto Calculated</Label>
-                <Input type="number" value={itemForm.selling_price_ton} readOnly className="bg-muted" placeholder="0" />
+
+              <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Bag Pricing</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Supplier Cost (per Bag)</Label>
+                    <Input
+                      type="number"
+                      value={itemForm.cost_price_bag}
+                      onChange={(e) => {
+                        const bagPrice = e.target.value;
+                        const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
+                        setItemForm({ ...itemForm, cost_price_bag: bagPrice, cost_price_ton: tonPrice });
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Selling Price (per Bag)</Label>
+                    <Input
+                      type="number"
+                      value={itemForm.selling_price_bag}
+                      onChange={(e) => {
+                        const bagPrice = e.target.value;
+                        const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
+                        setItemForm({ ...itemForm, selling_price_bag: bagPrice, selling_price_ton: tonPrice });
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
+
+            <LoadingButton onClick={handleAddProduct} isLoading={addProduct.isPending} className="w-full">
+              Add Product
+            </LoadingButton>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          <div className="space-y-4 p-4 rounded-lg bg-muted/30 border">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Bag Pricing</h3>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label className="text-xs">Supplier Cost (per Bag)</Label>
-                <Input
-                  type="number"
-                  value={itemForm.cost_price_bag}
-                  onChange={(e) => {
-                    const bagPrice = e.target.value;
-                    const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
-                    setItemForm({ ...itemForm, cost_price_bag: bagPrice, cost_price_ton: tonPrice });
-                  }}
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Selling Price (per Bag)</Label>
-                <Input
-                  type="number"
-                  value={itemForm.selling_price_bag}
-                  onChange={(e) => {
-                    const bagPrice = e.target.value;
-                    const tonPrice = bagPrice ? (parseFloat(bagPrice) * 20).toString() : "";
-                    setItemForm({ ...itemForm, selling_price_bag: bagPrice, selling_price_ton: tonPrice });
-                  }}
-                  placeholder="0"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <LoadingButton onClick={handleAddProduct} isLoading={addProduct.isPending} className="w-full">
-          Add Product
-        </LoadingButton>
-      </div>
-    </DialogContent>
-  </Dialog>
-
-  {/* Edit Product Dialog */ }
+      {/* Edit Product Dialog */}
       <Dialog open={editItemOpen} onOpenChange={setEditItemOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

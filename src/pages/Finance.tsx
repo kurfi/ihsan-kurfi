@@ -1445,36 +1445,33 @@ export default function Finance() {
                   </TableBody>
                 </Table>
               </ResponsiveTable>
-            ) : (
-              <div className="text-center py-10">
-                <Receipt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground">No confirmed payments have been received into this account.</p>
-              </div>
             )}
           </div>
-          <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{confirmConfig.title}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {confirmConfig.description}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className={confirmConfig.actionLabel === 'Renew' ? "" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
-                  onClick={() => {
-                    confirmConfig.onConfirm();
-                    setConfirmDialogOpen(false);
-                  }}
-                >
-                  {confirmConfig.actionLabel || "Confirm"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </MainLayout>
+        </DialogContent>
+      </Dialog>
 
-        );
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmConfig.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmConfig.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className={confirmConfig.actionLabel === 'Renew' ? "" : "bg-destructive text-destructive-foreground hover:bg-destructive/90"}
+              onClick={() => {
+                confirmConfig.onConfirm();
+                setConfirmDialogOpen(false);
+              }}
+            >
+              {confirmConfig.actionLabel || "Confirm"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </MainLayout>
+  );
 }

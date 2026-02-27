@@ -6,6 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
@@ -35,6 +39,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export default function CementPayments() {
     const { data: payments = [], isLoading } = useCementPaymentsToDangote();
@@ -78,6 +83,17 @@ export default function CementPayments() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!form.supplier_id) {
+            toast.error("Please select a supplier/manufacturer");
+            return;
+        }
+
+        if (!form.amount_paid || parseFloat(form.amount_paid) <= 0) {
+            toast.error("Please enter a valid amount");
+            return;
+        }
+
         await addPayment.mutateAsync({
             supplier_id: form.supplier_id || undefined,
             payment_date: form.payment_date,
@@ -211,7 +227,7 @@ export default function CementPayments() {
                             <form onSubmit={handleSubmit} className="space-y-4 py-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Payment Type</Label>
+                                        <Label>Payment Type *</Label>
                                         <Select
                                             value={form.payment_type}
                                             onValueChange={(value: "prepayment" | "postpayment") => setForm({ ...form, payment_type: value })}
@@ -226,7 +242,7 @@ export default function CementPayments() {
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Payment Method</Label>
+                                        <Label>Payment Method *</Label>
                                         <Select value={form.payment_method} onValueChange={(value) => setForm({ ...form, payment_method: value })}>
                                             <SelectTrigger>
                                                 <SelectValue />
@@ -242,7 +258,7 @@ export default function CementPayments() {
                                 </div>
 
                                 <div>
-                                    <Label>Supplier/Manufacturer</Label>
+                                    <Label>Supplier/Manufacturer *</Label>
                                     <Select value={form.supplier_id} onValueChange={(value) => setForm({ ...form, supplier_id: value })}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select supplier" />
@@ -258,7 +274,7 @@ export default function CementPayments() {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Payment Date</Label>
+                                        <Label>Payment Date *</Label>
                                         <Input
                                             type="date"
                                             value={form.payment_date}
@@ -267,7 +283,7 @@ export default function CementPayments() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Amount Paid (₦)</Label>
+                                        <Label>Amount Paid (₦) *</Label>
                                         <Input
                                             type="number"
                                             step="0.01"
