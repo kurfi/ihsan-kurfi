@@ -58,8 +58,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         waybill_number: "",
         atc_number: "",
         cap_number: "",
-        supplier_id: "",
-        manufacturer_payment_type: "postpaid" as "prepaid" | "postpaid",
     });
 
     const [automatedPricing, setAutomatedPricing] = useState({
@@ -114,8 +112,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
             waybill_number: "",
             atc_number: "",
             cap_number: "",
-            supplier_id: "",
-            manufacturer_payment_type: "postpaid",
         });
         setAutomatedPricing({ purchase_price: 0, sale_price: 0 });
     };
@@ -148,8 +144,6 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
                 cement_purchase_price: purchasePrice,
                 cement_sale_price: salePrice,
                 payment_terms: form.payment_terms,
-                supplier_id: form.supplier_id || undefined,
-                manufacturer_payment_type: form.manufacturer_payment_type,
             },
             {
                 onSuccess: () => {
@@ -160,18 +154,7 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
         );
     };
 
-    // Calculate current wallet balance
-    const activeWallet = useMemo(() => {
-        if (!form.supplier_id || !form.cement_type) return null;
-        return wallets.find(w => w.supplier_id === form.supplier_id && w.cement_type === form.cement_type);
-    }, [wallets, form.supplier_id, form.cement_type]);
 
-    const hasInsufficientFunds = useMemo(() => {
-        if (form.manufacturer_payment_type !== 'prepaid' || !activeWallet) return false;
-        const qty = parseFloat(form.quantity) || 0;
-        const requiredValue = qty * automatedPricing.purchase_price;
-        return activeWallet.balance < requiredValue;
-    }, [form.manufacturer_payment_type, activeWallet, form.quantity, automatedPricing.purchase_price]);
 
     // Get distinct cement types available for the selected source
     const availableProducts = form.depot_id
@@ -266,55 +249,9 @@ export function OrderForm({ open, onOpenChange }: OrderFormProps) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label>Manufacturer *</Label>
-                            <Select value={form.supplier_id} onValueChange={(v) => setForm({ ...form, supplier_id: v })}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select manufacturer" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {suppliers.map((s) => (
-                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Manufacturer Payment *</Label>
-                            <Select
-                                value={form.manufacturer_payment_type}
-                                onValueChange={(v: "prepaid" | "postpaid") => setForm({ ...form, manufacturer_payment_type: v })}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="prepaid">Prepaid (Wallet)</SelectItem>
-                                    <SelectItem value="postpaid">Postpaid</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
 
-                    {form.manufacturer_payment_type === 'prepaid' && (
-                        <div className={`p-3 rounded-lg border flex items-center justify-between transition-colors ${hasInsufficientFunds ? "bg-destructive/10 border-destructive/20" : "bg-primary/5 border-primary/10"}`}>
-                            <div className="flex items-center gap-2">
-                                <Wallet className={`w-4 h-4 ${hasInsufficientFunds ? "text-destructive" : "text-primary"}`} />
-                                <div>
-                                    <p className="text-[10px] uppercase font-bold text-muted-foreground leading-none mb-1">Available Wallet Balance</p>
-                                    <p className={`font-mono text-sm font-bold ${hasInsufficientFunds ? "text-destructive" : "text-primary"}`}>
-                                        ₦{activeWallet?.balance?.toLocaleString() || "0"}
-                                    </p>
-                                </div>
-                            </div>
-                            {hasInsufficientFunds && (
-                                <Badge variant="destructive" className="animate-pulse gap-1">
-                                    <AlertTriangle className="w-3 h-3" /> Insufficient
-                                </Badge>
-                            )}
-                        </div>
-                    )}
+
+
 
                     <div className="space-y-2">
                         <Label>Quantity *</Label>

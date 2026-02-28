@@ -28,7 +28,6 @@ const navItems = [
     { title: "Products & Pricing", url: "/products", icon: Package },
     { title: "Customers", url: "/customers", icon: Users },
     { title: "Finance", url: "/finance", icon: Banknote },
-    { title: "Cement Payments", url: "/cement-payments", icon: Banknote },
     { title: "Reports", url: "/reports", icon: BarChart },
 ];
 

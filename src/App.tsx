@@ -17,7 +17,6 @@ const Products = lazy(() => import("./pages/Products"));
 const Reports = lazy(() => import("./pages/Reports"));
 const TruckDetails = lazy(() => import("./pages/TruckDetails"));
 const DriverDetails = lazy(() => import("./pages/DriverDetails"));
-const CementPayments = lazy(() => import("./pages/CementPayments"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Configure caching: data stays fresh for 5 minutes, cached for 15 minutes
@@ -51,7 +50,6 @@ const App = () => (
               <Route path="/customers" element={<Customers />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/reports" element={<Reports />} />
-              <Route path="/cement-payments" element={<CementPayments />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

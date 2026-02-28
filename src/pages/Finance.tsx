@@ -19,6 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -42,10 +46,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePayments, useAddPayment, useExpenses, useAddExpense, useUpdatePayment, useDeletePayment, useUpdateExpense, useDeleteExpense, usePaymentAccounts, useAddPaymentAccount, useUpdatePaymentAccount, useDeletePaymentAccount, useOrderBalances, useConfirmPayment } from "@/hooks/useFinance";
+import { useCementPaymentsToDangote, useAddCementPaymentToDangote, useDeleteCementPayment } from "@/hooks/useCementPayments";
+import { useSuppliers, useWallets, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from "@/hooks/usePurchases";
+import { useProducts } from "@/hooks/useProductCatalog";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useOrders } from "@/hooks/useOrders";
 import { useTrucks } from "@/hooks/useFleet";
-import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck, Eye, Search } from "lucide-react";
+import { Plus, Banknote, Receipt, TrendingUp, TrendingDown, Wallet, Pencil, Trash2, Landmark, CheckCircle, XCircle, Truck, Eye, Search, Settings2, Edit2 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { PaymentCard } from "@/components/finance/PaymentCard";
 import { ExpenseCard } from "@/components/finance/ExpenseCard";
@@ -101,6 +108,25 @@ export default function Finance() {
   const [paymentSearch, setPaymentSearch] = useState("");
   const [expenseSearch, setExpenseSearch] = useState("");
   const [accountSearch, setAccountSearch] = useState("");
+  const [mfnPaymentSearch, setMfnPaymentSearch] = useState("");
+  const [walletSearch, setWalletSearch] = useState("");
+
+  const [mfnDialogOpen, setMfnDialogOpen] = useState(false);
+  const [manageSuppliersOpen, setManageSuppliersOpen] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<any>(null);
+  const [supplierForm, setSupplierForm] = useState({ name: "", contact_person: "", phone: "", email: "", address: "" });
+  const [mfnPaymentSortBy, setMfnPaymentSortBy] = useState("date_desc");
+  const [mfnForm, setMfnForm] = useState({
+    supplier_id: "",
+    payment_date: format(new Date(), "yyyy-MM-dd"),
+    amount_paid: "",
+    payment_reference: "",
+    period_covered: "",
+    payment_method: "bank_transfer",
+    payment_type: "postpayment" as "prepayment" | "postpayment",
+    cement_type: "",
+    notes: "",
+  });
 
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState<{
@@ -128,6 +154,17 @@ export default function Finance() {
   const updateAccount = useUpdatePaymentAccount();
   const deleteAccount = useDeletePaymentAccount();
   const confirmPayment = useConfirmPayment();
+
+  // Manufacturer Hooks
+  const { data: mfnPayments = [], isLoading: loadingMfnPayments } = useCementPaymentsToDangote();
+  const { data: wallets = [], isLoading: loadingWallets } = useWallets();
+  const { data: suppliers = [] } = useSuppliers();
+  const { data: products = [] } = useProducts();
+  const addMfnPayment = useAddCementPaymentToDangote();
+  const deleteMfnPayment = useDeleteCementPayment();
+  const createSupplier = useCreateSupplier();
+  const updateSupplier = useUpdateSupplier();
+  const deleteSupplier = useDeleteSupplier();
 
   const { data: unsettledOrders = [] } = useOrderBalances(paymentForm.customer_id);
 
@@ -361,6 +398,104 @@ export default function Finance() {
     setLedgerDialogOpen(true);
   };
 
+  const handleMfnSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!mfnForm.payment_type) {
+      toast.error("Please select a payment type");
+      return;
+    }
+
+    if (!mfnForm.payment_method) {
+      toast.error("Please select a payment method");
+      return;
+    }
+
+    if (!mfnForm.supplier_id) {
+      toast.error("Please select a supplier/manufacturer");
+      return;
+    }
+
+    if (!mfnForm.payment_date) {
+      toast.error("Please select a payment date");
+      return;
+    }
+
+    if (mfnForm.payment_type === 'prepayment' && !mfnForm.cement_type) {
+      toast.error("Please select a cement type for prepayments");
+      return;
+    }
+
+    if (!mfnForm.amount_paid || parseFloat(mfnForm.amount_paid) <= 0) {
+      toast.error("Please enter a valid amount paid (₦)");
+      return;
+    }
+
+    await addMfnPayment.mutateAsync({
+      supplier_id: mfnForm.supplier_id || undefined,
+      payment_date: mfnForm.payment_date,
+      amount_paid: parseFloat(mfnForm.amount_paid),
+      payment_reference: mfnForm.payment_reference || undefined,
+      period_covered: mfnForm.period_covered || undefined,
+      payment_method: mfnForm.payment_method || undefined,
+      payment_type: mfnForm.payment_type,
+      cement_type: mfnForm.payment_type === 'prepayment' ? mfnForm.cement_type : undefined,
+      notes: mfnForm.notes || undefined,
+    });
+    setMfnDialogOpen(false);
+    setMfnForm({
+      supplier_id: "",
+      payment_date: format(new Date(), "yyyy-MM-dd"),
+      amount_paid: "",
+      payment_reference: "",
+      period_covered: "",
+      payment_method: "bank_transfer",
+      payment_type: "postpayment",
+      cement_type: "",
+      notes: "",
+    });
+  };
+
+  const handleMfnDelete = (id: string, reference: string) => {
+    setConfirmConfig({
+      title: "Delete Payment",
+      description: `Delete payment ${reference}? This action cannot be undone.`,
+      onConfirm: () => deleteMfnPayment.mutate(id),
+    });
+    setConfirmDialogOpen(true);
+  };
+
+  const handleSupplierSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingSupplier) {
+      await updateSupplier.mutateAsync({ id: editingSupplier.id, ...supplierForm });
+      setEditingSupplier(null);
+    } else {
+      await createSupplier.mutateAsync(supplierForm);
+    }
+    setSupplierForm({ name: "", contact_person: "", phone: "", email: "", address: "" });
+  };
+
+  const handleEditSupplier = (supplier: any) => {
+    setEditingSupplier(supplier);
+    setSupplierForm({
+      name: supplier.name || "",
+      contact_person: supplier.contact_person || "",
+      phone: supplier.phone || "",
+      email: supplier.email || "",
+      address: supplier.address || "",
+    });
+  };
+
+  const handleDeleteSupplier = (id: string, name: string) => {
+    setConfirmConfig({
+      title: "Delete Manufacturer",
+      description: `Are you sure you want to delete manufacturer "${name}"? This may affect existing records.`,
+      onConfirm: () => deleteSupplier.mutate(id),
+    });
+    setConfirmDialogOpen(true);
+  };
+
   const activeAccounts = paymentAccounts.filter(a => a.is_active);
 
   const getAccountPayments = (accountId: string) => {
@@ -430,6 +565,43 @@ export default function Finance() {
     account.account_number.includes(accountSearch) ||
     account.account_name.toLowerCase().includes(accountSearch.toLowerCase())
   );
+
+  const filteredWallets = wallets.filter((wallet: any) =>
+    (wallet.suppliers?.name && wallet.suppliers.name.toLowerCase().includes(walletSearch.toLowerCase())) ||
+    (wallet.cement_type && wallet.cement_type.toLowerCase().includes(walletSearch.toLowerCase()))
+  );
+
+  const filteredMfnPayments = mfnPayments.filter(payment => {
+    if (!mfnPaymentSearch) return true;
+
+    const searchLower = mfnPaymentSearch.toLowerCase();
+    const reference = payment.payment_reference?.toLowerCase() || "";
+    const cementType = payment.cement_type?.toLowerCase() || "";
+    const supplierName = (payment as any).supplier?.name?.toLowerCase() || "";
+    const period = payment.period_covered?.toLowerCase() || "";
+    const notes = payment.notes?.toLowerCase() || "";
+    const type = payment.payment_type?.toLowerCase() || "";
+
+    return reference.includes(searchLower) ||
+      cementType.includes(searchLower) ||
+      supplierName.includes(searchLower) ||
+      period.includes(searchLower) ||
+      notes.includes(searchLower) ||
+      type.includes(searchLower);
+  });
+
+  const sortedMfnPayments = [...filteredMfnPayments].sort((a, b) => {
+    if (mfnPaymentSortBy === "date_desc") {
+      return new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime();
+    } else if (mfnPaymentSortBy === "date_asc") {
+      return new Date(a.payment_date).getTime() - new Date(b.payment_date).getTime();
+    } else if (mfnPaymentSortBy === "amount_desc") {
+      return b.amount_paid - a.amount_paid;
+    } else if (mfnPaymentSortBy === "amount_asc") {
+      return a.amount_paid - b.amount_paid;
+    }
+    return 0;
+  });
 
 
   return (
@@ -534,6 +706,7 @@ export default function Finance() {
             <TabsTrigger value="payments">Payment Ledger</TabsTrigger>
             <TabsTrigger value="expenses">Expenses</TabsTrigger>
             <TabsTrigger value="accounts">Accounts</TabsTrigger>
+            <TabsTrigger value="manufacturer">Manufacturer Payments</TabsTrigger>
           </TabsList>
 
           <TabsContent value="payments">
@@ -1163,6 +1336,426 @@ export default function Finance() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="manufacturer">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Banknote className="w-5 h-5 text-primary" />
+                    Manufacturer Payments & Wallets
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Manage pre-payments and balances with cement manufacturers</p>
+                </div>
+                <div className="flex gap-2">
+                  <Dialog open={manageSuppliersOpen} onOpenChange={setManageSuppliersOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">
+                        <Settings2 className="h-4 w-4 mr-2" />
+                        Manage Manufacturers
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Manage Manufacturers</DialogTitle>
+                        <DialogDescription>Add, edit or remove cement manufacturers.</DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-6 py-4">
+                        <form onSubmit={handleSupplierSubmit} className="space-y-4 border p-4 rounded-lg bg-muted/30">
+                          <h4 className="text-sm font-semibold">{editingSupplier ? "Edit Manufacturer" : "Add New Manufacturer"}</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <Label htmlFor="name">Manufacturer Name</Label>
+                              <Input
+                                id="name"
+                                value={supplierForm.name}
+                                onChange={(e) => setSupplierForm({ ...supplierForm, name: e.target.value })}
+                                placeholder="e.g. Dangote Cement"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="contact">Contact Person</Label>
+                              <Input
+                                id="contact"
+                                value={supplierForm.contact_person}
+                                onChange={(e) => setSupplierForm({ ...supplierForm, contact_person: e.target.value })}
+                                placeholder="Director of Sales"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="phone">Phone Number</Label>
+                              <Input
+                                id="phone"
+                                value={supplierForm.phone}
+                                onChange={(e) => setSupplierForm({ ...supplierForm, phone: e.target.value })}
+                                placeholder="080..."
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label htmlFor="email">Email Address</Label>
+                              <Input
+                                id="email"
+                                type="email"
+                                value={supplierForm.email}
+                                onChange={(e) => setSupplierForm({ ...supplierForm, email: e.target.value })}
+                                placeholder="info@manufacturer.com"
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="address">Address</Label>
+                            <Input
+                              id="address"
+                              value={supplierForm.address}
+                              onChange={(e) => setSupplierForm({ ...supplierForm, address: e.target.value })}
+                              placeholder="Headquarters location"
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2 pt-2">
+                            {editingSupplier && (
+                              <Button type="button" variant="ghost" onClick={() => {
+                                setEditingSupplier(null);
+                                setSupplierForm({ name: "", contact_person: "", phone: "", email: "", address: "" });
+                              }}>
+                                Cancel
+                              </Button>
+                            )}
+                            <Button type="submit" disabled={createSupplier.isPending || updateSupplier.isPending}>
+                              {editingSupplier ? "Update" : "Add Manufacturer"}
+                            </Button>
+                          </div>
+                        </form>
+
+                        <div className="max-h-[300px] overflow-y-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Manufacturer</TableHead>
+                                <TableHead>Contact</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {suppliers.map((s) => (
+                                <TableRow key={s.id}>
+                                  <TableCell className="font-medium">{s.name}</TableCell>
+                                  <TableCell>
+                                    <div className="text-xs">{s.contact_person || "-"}</div>
+                                    <div className="text-[10px] text-muted-foreground">{s.phone}</div>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <div className="flex justify-end gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleEditSupplier(s)}
+                                      >
+                                        <Edit2 className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => handleDeleteSupplier(s.id, s.name)}
+                                        className="text-destructive hover:text-destructive"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                              {suppliers.length === 0 && (
+                                <TableRow>
+                                  <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                    No manufacturers found.
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={mfnDialogOpen} onOpenChange={setMfnDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="gradient-primary">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Record Payment
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Record Payment to Manufacturer</DialogTitle>
+                        <DialogDescription>Record a new payment made to the cement manufacturer.</DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleMfnSubmit} className="space-y-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Payment Type *</Label>
+                            <Select
+                              value={mfnForm.payment_type}
+                              onValueChange={(value: "prepayment" | "postpayment") => setMfnForm({ ...mfnForm, payment_type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="postpayment">Regular (Post-pay)</SelectItem>
+                                <SelectItem value="prepayment">Lifting Credit (Pre-pay)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Payment Method *</Label>
+                            <Select value={mfnForm.payment_method} onValueChange={(value) => setMfnForm({ ...mfnForm, payment_method: value })}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                                <SelectItem value="cash">Cash</SelectItem>
+                                <SelectItem value="cheque">Cheque</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Supplier/Manufacturer *</Label>
+                          <Select value={mfnForm.supplier_id} onValueChange={(value) => setMfnForm({ ...mfnForm, supplier_id: value })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select supplier" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {suppliers.map((s) => (
+                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Payment Date *</Label>
+                            <Input
+                              type="date"
+                              value={mfnForm.payment_date}
+                              onChange={(e) => setMfnForm({ ...mfnForm, payment_date: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Amount Paid (₦) *</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={mfnForm.amount_paid}
+                              onChange={(e) => setMfnForm({ ...mfnForm, amount_paid: e.target.value })}
+                              required
+                              placeholder="5000000"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Payment Reference</Label>
+                          <Input
+                            value={mfnForm.payment_reference}
+                            onChange={(e) => setMfnForm({ ...mfnForm, payment_reference: e.target.value })}
+                            placeholder="TRF/2026/0209"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Period Covered (Optional)</Label>
+                          <Input
+                            value={mfnForm.period_covered}
+                            onChange={(e) => setMfnForm({ ...mfnForm, period_covered: e.target.value })}
+                            placeholder="Jan 1-31, 2026"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Notes</Label>
+                          <Textarea
+                            value={mfnForm.notes}
+                            onChange={(e) => setMfnForm({ ...mfnForm, notes: e.target.value })}
+                            placeholder="Additional details..."
+                            rows={2}
+                          />
+                        </div>
+
+                        {mfnForm.payment_type === 'prepayment' && (
+                          <div className="space-y-2">
+                            <Label>Cement Type *</Label>
+                            <Select
+                              value={mfnForm.cement_type}
+                              onValueChange={(value) => setMfnForm({ ...mfnForm, cement_type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select cement type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Array.from(new Set(products.map(p => p.cement_type))).map(type => (
+                                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        <Button type="submit" className="w-full" disabled={addMfnPayment.isPending}>
+                          {addMfnPayment.isPending ? "Recording..." : "Record Payment"}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+
+              {/* Manufacturer Wallets */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    Manufacturer Wallets
+                  </h4>
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search wallets..."
+                      value={walletSearch}
+                      onChange={(e) => setWalletSearch(e.target.value)}
+                      className="pl-9 h-8 text-xs"
+                    />
+                  </div>
+                </div>
+
+                {loadingWallets ? (
+                  <div className="grid gap-4 md:grid-cols-4">
+                    {Array(4).fill(0).map((_, i) => <LoadingSkeleton key={i} className="h-24 w-full" />)}
+                  </div>
+                ) : wallets.length === 0 ? (
+                  <div className="col-span-full py-6 text-center border-2 border-dashed rounded-lg bg-muted/20">
+                    <Wallet className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm font-medium">No Manufacturer Wallets</p>
+                    <p className="text-xs text-muted-foreground">Wallets are created when you record a prepayment.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-5">
+                    {filteredWallets.map((wallet: any) => (
+                      <Card key={wallet.id} className="bg-accent/5 overflow-hidden transition-all hover:shadow-md">
+                        <CardHeader className="p-3 pb-0">
+                          <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+                            {wallet.suppliers?.name}
+                            <Badge variant="outline" className="text-[9px] h-4 px-1">{wallet.unit}</Badge>
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-3 pt-1">
+                          <div className="text-lg font-bold">₦{wallet.balance.toLocaleString()}</div>
+                          <p className="text-xs text-primary truncate font-medium">{wallet.cement_type}</p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Payment History */}
+              <Card className="shadow-card">
+                <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between">
+                  <CardTitle className="heading-section">Payment History</CardTitle>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search history..."
+                        value={mfnPaymentSearch}
+                        onChange={(e) => setMfnPaymentSearch(e.target.value)}
+                        className="pl-9 h-9"
+                      />
+                    </div>
+                    <Select value={mfnPaymentSortBy} onValueChange={setMfnPaymentSortBy}>
+                      <SelectTrigger className="w-full sm:w-[180px]">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date_desc">Newest First</SelectItem>
+                        <SelectItem value="date_asc">Oldest First</SelectItem>
+                        <SelectItem value="amount_desc">Amount (High to Low)</SelectItem>
+                        <SelectItem value="amount_asc">Amount (Low to High)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-0">
+                  {loadingMfnPayments ? (
+                    <div className="p-4">
+                      <LoadingSkeleton variant="table" rows={5} />
+                    </div>
+                  ) : mfnPayments.length === 0 ? (
+                    <EmptyState
+                      icon={Banknote}
+                      title="No payments recorded"
+                      description="Record your first payment to a cement manufacturer"
+                    />
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Manufacturer</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead>Reference</TableHead>
+                            <TableHead>Note/Item</TableHead>
+                            <TableHead>Method</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sortedMfnPayments.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>{format(new Date(payment.payment_date), "MMM dd, yyyy")}</TableCell>
+                              <TableCell className="font-medium">{(payment as any).supplier?.name || "-"}</TableCell>
+                              <TableCell>
+                                <Badge variant={payment.payment_type === 'prepayment' ? 'default' : 'secondary'} className="text-[10px] capitalize">
+                                  {payment.payment_type || 'postpayment'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                ₦{payment.amount_paid.toLocaleString()}
+                              </TableCell>
+                              <TableCell>{payment.payment_reference || "-"}</TableCell>
+                              <TableCell>{payment.cement_type || payment.period_covered || "-"}</TableCell>
+                              <TableCell className="capitalize">{payment.payment_method?.replace('_', ' ') || "-"}</TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleMfnDelete(payment.id, payment.payment_reference || payment.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
