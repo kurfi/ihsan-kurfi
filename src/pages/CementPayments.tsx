@@ -27,6 +27,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useCementPaymentsToDangote, useAddCementPaymentToDangote, useDeleteCementPayment } from "@/hooks/useCementPayments";
 import { useSuppliers, useWallets, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from "@/hooks/usePurchases";
+import { useProducts } from "@/hooks/useProductCatalog";
 import { Plus, Banknote, Trash2, Wallet, Search, Settings2, Edit2 } from "lucide-react";
 import { format } from "date-fns";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
@@ -45,6 +46,7 @@ export default function CementPayments() {
     const { data: payments = [], isLoading } = useCementPaymentsToDangote();
     const { data: wallets = [], isLoading: isLoadingWallets } = useWallets();
     const { data: suppliers = [] } = useSuppliers();
+    const { data: products = [] } = useProducts();
     const addPayment = useAddCementPaymentToDangote();
     const deletePayment = useDeleteCementPayment();
     const createSupplier = useCreateSupplier();
@@ -101,6 +103,11 @@ export default function CementPayments() {
 
         if (!form.payment_date) {
             toast.error("Please select a payment date");
+            return;
+        }
+
+        if (form.payment_type === 'prepayment' && !form.cement_type) {
+            toast.error("Please select a cement type for prepayments");
             return;
         }
 
@@ -337,6 +344,26 @@ export default function CementPayments() {
                                         rows={2}
                                     />
                                 </div>
+
+                                {form.payment_type === 'prepayment' && (
+                                    <div className="space-y-2">
+                                        <Label>Cement Type *</Label>
+                                        <Select
+                                            value={form.cement_type}
+                                            onValueChange={(value) => setForm({ ...form, cement_type: value })}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select cement type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {Array.from(new Set(products.map(p => p.cement_type))).map(type => (
+                                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+
                                 <Button type="submit" className="w-full" disabled={addPayment.isPending}>
                                     {addPayment.isPending ? "Recording..." : "Record Payment"}
                                 </Button>
