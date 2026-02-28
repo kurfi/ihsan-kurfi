@@ -84,13 +84,28 @@ export default function CementPayments() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!form.payment_type) {
+            toast.error("Please select a payment type");
+            return;
+        }
+
+        if (!form.payment_method) {
+            toast.error("Please select a payment method");
+            return;
+        }
+
         if (!form.supplier_id) {
             toast.error("Please select a supplier/manufacturer");
             return;
         }
 
+        if (!form.payment_date) {
+            toast.error("Please select a payment date");
+            return;
+        }
+
         if (!form.amount_paid || parseFloat(form.amount_paid) <= 0) {
-            toast.error("Please enter a valid amount");
+            toast.error("Please enter a valid amount paid (₦)");
             return;
         }
 
