@@ -45,6 +45,7 @@ export interface Order {
   cement_profit: number | null;
   cement_margin_percent: number | null;
   payment_terms: string | null;
+  manufacturer_payment_type: 'prepaid' | 'postpaid' | null;
   total_trip_cost: number | null;
   created_at: string;
   updated_at: string;
@@ -130,6 +131,7 @@ export function useCreateOrder() {
       payment_terms?: string;
       atc_number?: string;
       cap_number?: string;
+      manufacturer_payment_type?: 'prepaid' | 'postpaid';
     }) => {
       // We process the order directly.
       if (!order.depot_id) throw new Error("Product Source is required");
@@ -142,7 +144,7 @@ export function useCreateOrder() {
         .insert({
           ...orderData,
           unit: orderData.unit || "bags"
-        })
+        } as any)
         .select()
         .single();
 
