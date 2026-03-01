@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/table";
 import { usePayments, useAddPayment, useExpenses, useAddExpense, useUpdatePayment, useDeletePayment, useUpdateExpense, useDeleteExpense, usePaymentAccounts, useAddPaymentAccount, useUpdatePaymentAccount, useDeletePaymentAccount, useOrderBalances, useConfirmPayment } from "@/hooks/useFinance";
 import { useCementPaymentsToDangote, useAddCementPaymentToDangote, useDeleteCementPayment } from "@/hooks/useCementPayments";
-import { useSuppliers, useWallets, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from "@/hooks/usePurchases";
+import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier } from "@/hooks/usePurchases";
 import { useProducts } from "@/hooks/useProductCatalog";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useOrders } from "@/hooks/useOrders";
@@ -109,7 +109,7 @@ export default function Finance() {
   const [expenseSearch, setExpenseSearch] = useState("");
   const [accountSearch, setAccountSearch] = useState("");
   const [mfnPaymentSearch, setMfnPaymentSearch] = useState("");
-  const [mfnPaymentSearch, setMfnPaymentSearch] = useState("");
+
 
   const [mfnDialogOpen, setMfnDialogOpen] = useState(false);
   const [manageSuppliersOpen, setManageSuppliersOpen] = useState(false);
@@ -157,7 +157,7 @@ export default function Finance() {
 
   // Manufacturer Hooks
   const { data: mfnPayments = [], isLoading: loadingMfnPayments } = useCementPaymentsToDangote();
-  const { data: wallets = [], isLoading: loadingWallets } = useWallets();
+
   const { data: suppliers = [] } = useSuppliers();
   const { data: products = [] } = useProducts();
   const addMfnPayment = useAddCementPaymentToDangote();
