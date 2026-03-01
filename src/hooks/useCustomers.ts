@@ -42,6 +42,19 @@ export function useAddCustomer() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Added Customer',
+          entity_type: 'customers',
+          entity_id: data.id,
+          details: { name: customer.name }
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -67,6 +80,19 @@ export function useUpdateCustomer() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Updated Customer',
+          entity_type: 'customers',
+          entity_id: id,
+          details: updates
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -92,6 +118,18 @@ export function useToggleCustomerBlock() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: is_blocked ? 'Blocked Customer' : 'Unblocked Customer',
+          entity_type: 'customers',
+          entity_id: id,
+        });
+      }
+
       return data;
     },
     onSuccess: (data) => {

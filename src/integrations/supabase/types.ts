@@ -1043,6 +1043,73 @@ export type Database = {
           }
         ]
       }
+      profiles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          full_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          full_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          full_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          action: string
+          entity_type: string
+          entity_id: string | null
+          details: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          action: string
+          entity_type: string
+          entity_id?: string | null
+          details?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          action?: string
+          entity_type?: string
+          entity_id?: string | null
+          details?: Json | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       customer_aging: {
@@ -1213,6 +1280,8 @@ export type Database = {
       | "salary_payment"
       | "bonus"
       | "deposit"
+      | "other",
+      user_role: "super_admin" | "admin" | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1362,6 +1431,7 @@ export const Constants = {
         "bonus",
         "deposit",
       ],
+      user_role: ["super_admin", "admin", "manager"],
     },
   },
 } as const

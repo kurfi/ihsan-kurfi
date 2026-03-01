@@ -175,6 +175,22 @@ export function useCreateOrder() {
 
       // 3. Plant Direct Logic - REMOVED, all orders are now universally sourced
 
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Created Order',
+          entity_type: 'orders',
+          entity_id: newOrder.id,
+          details: {
+            quantity: newOrder.quantity,
+            customer_id: newOrder.customer_id,
+            total_amount: newOrder.total_amount
+          }
+        });
+      }
+
       return newOrder;
     },
     onSuccess: () => {
@@ -214,6 +230,18 @@ export function useConfirmDispatch() {
         .single();
 
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Dispatched Order',
+          entity_type: 'orders',
+          entity_id: orderId,
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -254,6 +282,19 @@ export function useUpdateOrderStatus() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: `Updated Order Status to ${status}`,
+          entity_type: 'orders',
+          entity_id: id,
+          details: updateData as Record<string, any>
+        });
+      }
+
       return data;
     },
     onMutate: async (newStatusData) => {
@@ -323,6 +364,19 @@ export function useUpdateOrder() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Updated Order details',
+          entity_type: 'orders',
+          entity_id: id,
+          details: updates
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -373,6 +427,17 @@ export function useDeleteOrder() {
         .eq("id", order.id);
 
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Deleted Order',
+          entity_type: 'orders',
+          entity_id: order.id,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });

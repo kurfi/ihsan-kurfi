@@ -67,7 +67,7 @@ export function useExpenses(options?: { orderId?: string; truckId?: string }) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Expense[];
+      return data as unknown as Expense[];
     },
   });
 }
@@ -125,6 +125,19 @@ export function useAddExpense() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Added Expense',
+          entity_type: 'expenses',
+          entity_id: data.id,
+          details: { expense_type: expense.expense_type, amount: expense.amount }
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -149,6 +162,19 @@ export function useAddPaymentAccount() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Added Payment Account',
+          entity_type: 'payment_accounts',
+          entity_id: data.id,
+          details: { bank_name: account.bank_name, account_number: account.account_number }
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -174,6 +200,19 @@ export function useUpdatePaymentAccount() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Updated Payment Account',
+          entity_type: 'payment_accounts',
+          entity_id: id,
+          details: updates as Record<string, any>
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -197,6 +236,17 @@ export function useDeletePaymentAccount() {
         .delete()
         .eq("id", id);
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Deleted Payment Account',
+          entity_type: 'payment_accounts',
+          entity_id: id,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payment_accounts"] });
@@ -242,6 +292,19 @@ export function useAddPayment() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Recorded Payment',
+          entity_type: 'payments',
+          entity_id: data.id,
+          details: { amount: payment.amount, payment_method: payment.payment_method } as Record<string, any>
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -268,6 +331,18 @@ export function useConfirmPayment() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: `Updated Payment Status to ${status}`,
+          entity_type: 'payments',
+          entity_id: id,
+        });
+      }
+
       return data;
     },
     onSuccess: (_, variables) => {
@@ -320,6 +395,19 @@ export function useUpdateExpense() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Updated Expense',
+          entity_type: 'expenses',
+          entity_id: id,
+          details: updates as Record<string, any>
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -343,6 +431,17 @@ export function useDeleteExpense() {
         .delete()
         .eq("id", id);
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Deleted Expense',
+          entity_type: 'expenses',
+          entity_id: id,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
@@ -367,6 +466,19 @@ export function useUpdatePayment() {
         .select()
         .single();
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Updated Payment',
+          entity_type: 'payments',
+          entity_id: id,
+          details: updates as Record<string, any>
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -391,6 +503,17 @@ export function useDeletePayment() {
         .delete()
         .eq("id", id);
       if (error) throw error;
+
+      // Add Audit Log
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_logs').insert({
+          user_id: user.id,
+          action: 'Deleted Payment',
+          entity_type: 'payments',
+          entity_id: id,
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
