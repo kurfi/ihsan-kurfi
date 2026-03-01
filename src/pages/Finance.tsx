@@ -109,7 +109,7 @@ export default function Finance() {
   const [expenseSearch, setExpenseSearch] = useState("");
   const [accountSearch, setAccountSearch] = useState("");
   const [mfnPaymentSearch, setMfnPaymentSearch] = useState("");
-  const [walletSearch, setWalletSearch] = useState("");
+  const [mfnPaymentSearch, setMfnPaymentSearch] = useState("");
 
   const [mfnDialogOpen, setMfnDialogOpen] = useState(false);
   const [manageSuppliersOpen, setManageSuppliersOpen] = useState(false);
@@ -566,10 +566,6 @@ export default function Finance() {
     account.account_name.toLowerCase().includes(accountSearch.toLowerCase())
   );
 
-  const filteredWallets = wallets.filter((wallet: any) =>
-    (wallet.suppliers?.name && wallet.suppliers.name.toLowerCase().includes(walletSearch.toLowerCase())) ||
-    (wallet.cement_type && wallet.cement_type.toLowerCase().includes(walletSearch.toLowerCase()))
-  );
 
   const filteredMfnPayments = mfnPayments.filter(payment => {
     if (!mfnPaymentSearch) return true;
@@ -1344,7 +1340,7 @@ export default function Finance() {
                 <div>
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Banknote className="w-5 h-5 text-primary" />
-                    Manufacturer Payments & Wallets
+                    Manufacturer Payments
                   </h3>
                   <p className="text-sm text-muted-foreground">Manage pre-payments and balances with cement manufacturers</p>
                 </div>
@@ -1504,8 +1500,8 @@ export default function Finance() {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="postpayment">Regular (Post-pay)</SelectItem>
-                                <SelectItem value="prepayment">Lifting Credit (Pre-pay)</SelectItem>
+                                <SelectItem value="postpayment">Post-payment</SelectItem>
+                                <SelectItem value="prepayment">Pre-payment</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1619,53 +1615,6 @@ export default function Finance() {
                 </div>
               </div>
 
-              {/* Manufacturer Wallets */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    <Wallet className="w-4 h-4" />
-                    Manufacturer Wallets
-                  </h4>
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search wallets..."
-                      value={walletSearch}
-                      onChange={(e) => setWalletSearch(e.target.value)}
-                      className="pl-9 h-8 text-xs"
-                    />
-                  </div>
-                </div>
-
-                {loadingWallets ? (
-                  <div className="grid gap-4 md:grid-cols-4">
-                    {Array(4).fill(0).map((_, i) => <LoadingSkeleton key={i} className="h-24 w-full" />)}
-                  </div>
-                ) : wallets.length === 0 ? (
-                  <div className="col-span-full py-6 text-center border-2 border-dashed rounded-lg bg-muted/20">
-                    <Wallet className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm font-medium">No Manufacturer Wallets</p>
-                    <p className="text-xs text-muted-foreground">Wallets are created when you record a prepayment.</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-5">
-                    {filteredWallets.map((wallet: any) => (
-                      <Card key={wallet.id} className="bg-accent/5 overflow-hidden transition-all hover:shadow-md">
-                        <CardHeader className="p-3 pb-0">
-                          <CardTitle className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                            {wallet.suppliers?.name}
-                            <Badge variant="outline" className="text-[9px] h-4 px-1">{wallet.unit}</Badge>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-3 pt-1">
-                          <div className="text-lg font-bold">₦{wallet.balance.toLocaleString()}</div>
-                          <p className="text-xs text-primary truncate font-medium">{wallet.cement_type}</p>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {/* Payment History */}
               <Card className="shadow-card">
