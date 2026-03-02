@@ -25,23 +25,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                fetchProfile(session.user.id);
-            } else {
+        const initAuth = async () => {
+            try {
+                // Get initial session
+                const { data: { session } } = await supabase.auth.getSession();
+                setSession(session);
+                setUser(session?.user ?? null);
+
+                if (session?.user) {
+                    await fetchProfile(session.user.id);
+                } else if (!window.location.hash.includes('access_token=')) {
+                    // Only stop loading if we aren't expecting a hash-based login
+                    setLoading(false);
+                }
+            } catch (error) {
+                console.error("Auth initialization error:", error);
                 setLoading(false);
             }
-        });
+        };
+
+        initAuth();
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log("Auth event:", event);
             setSession(session);
             setUser(session?.user ?? null);
+
             if (session?.user) {
                 fetchProfile(session.user.id);
+
+                // Clean up the URL by removing the hash fragments after successful login
+                if (window.location.hash.includes('access_token=')) {
+                    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+                }
             } else {
                 setProfile(null);
                 setLoading(false);
