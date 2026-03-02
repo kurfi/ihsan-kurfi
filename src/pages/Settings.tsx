@@ -1,18 +1,48 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/hooks/useAuth"
-import { ShieldAlert, Users, History, Loader2 } from "lucide-react"
+import { ShieldAlert, Users, History, Loader2, Plus, Eye, EyeOff } from "lucide-react"
 import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Settings() {
     const { isSuperAdmin, isAdmin } = useAuth()
+    const { toast } = useToast()
     const [users, setUsers] = useState<any[]>([])
     const [auditLogs, setAuditLogs] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+
+    // Add user dialog state
+    const [addUserOpen, setAddUserOpen] = useState(false)
+    const [addUserLoading, setAddUserLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [newUser, setNewUser] = useState({
+        full_name: "",
+        email: "",
+        password: "",
+        role: "manager" as "super_admin" | "admin" | "manager",
+    })
 
     useEffect(() => {
         if (isAdmin) {
@@ -23,7 +53,6 @@ export default function Settings() {
     const fetchData = async () => {
         try {
             setLoading(true)
-            // Fetch Users
             const { data: usersData, error: usersError } = await supabase
                 .from('profiles')
                 .select('*')
@@ -32,8 +61,7 @@ export default function Settings() {
             if (usersError) throw usersError
             setUsers(usersData || [])
 
-            // Fetch Audit Logs (Admins see specific logs, SuperAdmins see all)
-            let logsQuery = supabase
+            const logsQuery = supabase
                 .from('audit_logs')
                 .select(`
                     *,
@@ -42,9 +70,7 @@ export default function Settings() {
                 .order('created_at', { ascending: false })
                 .limit(100)
 
-            // Simple filter for Admins if needed later, right now let's just fetch all they have access to via RLS
             const { data: logsData, error: logsError } = await logsQuery
-
             if (logsError) throw logsError
             setAuditLogs(logsData || [])
 
@@ -52,6 +78,42 @@ export default function Settings() {
             console.error("Error fetching settings data:", error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleAddUser = async () => {
+        if (!newUser.email || !newUser.password || !newUser.role) {
+            toast({ title: "Missing fields", description: "Email, password, and role are required.", variant: "destructive" })
+            return
+        }
+        if (newUser.password.length < 8) {
+            toast({ title: "Password too short", description: "Password must be at least 8 characters.", variant: "destructive" })
+            return
+        }
+
+        try {
+            setAddUserLoading(true)
+            const { data, error } = await supabase.functions.invoke("create-user", {
+                body: {
+                    email: newUser.email,
+                    password: newUser.password,
+                    full_name: newUser.full_name,
+                    role: newUser.role,
+                },
+            })
+
+            if (error) throw error
+            if (data?.error) throw new Error(data.error)
+
+            toast({ title: "User created!", description: `${newUser.email} has been added as ${newUser.role.replace('_', ' ')}.` })
+            setAddUserOpen(false)
+            setNewUser({ full_name: "", email: "", password: "", role: "manager" })
+            // Refresh user list
+            fetchData()
+        } catch (err: any) {
+            toast({ title: "Failed to create user", description: err.message, variant: "destructive" })
+        } finally {
+            setAddUserLoading(false)
         }
     }
 
@@ -90,11 +152,17 @@ export default function Settings() {
 
                 <TabsContent value="users" className="space-y-4">
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Users</CardTitle>
-                            <CardDescription>
-                                Manage system users and their roles.
-                            </CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Users</CardTitle>
+                                <CardDescription>
+                                    Manage system users and their roles.
+                                </CardDescription>
+                            </div>
+                            <Button onClick={() => setAddUserOpen(true)} className="gradient-primary">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add User
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             {loading ? (
@@ -112,6 +180,13 @@ export default function Settings() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
+                                            {users.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell colSpan={3} className="text-center text-muted-foreground h-24">
+                                                        No users found.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
                                             {users.map((u) => (
                                                 <TableRow key={u.id}>
                                                     <TableCell className="font-medium">{u.full_name || 'N/A'}</TableCell>
@@ -208,6 +283,93 @@ export default function Settings() {
                     </TabsContent>
                 )}
             </Tabs>
+
+            {/* Add User Dialog */}
+            <Dialog open={addUserOpen} onOpenChange={setAddUserOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Add New User</DialogTitle>
+                        <DialogDescription>
+                            Create a new system user. They will be able to log in immediately with the credentials you provide.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="full_name">Full Name</Label>
+                            <Input
+                                id="full_name"
+                                placeholder="e.g. Amina Yusuf"
+                                value={newUser.full_name}
+                                onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email Address *</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="user@example.com"
+                                value={newUser.email}
+                                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password *</Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Min. 8 characters"
+                                    value={newUser.password}
+                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="role">Role *</Label>
+                            <Select
+                                value={newUser.role}
+                                onValueChange={(v) => setNewUser({ ...newUser, role: v as any })}
+                            >
+                                <SelectTrigger id="role">
+                                    <SelectValue placeholder="Select a role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    {isSuperAdmin && (
+                                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                                {newUser.role === 'manager' && 'Managers can create orders and record payments, but cannot approve them.'}
+                                {newUser.role === 'admin' && 'Admins have full operational access including approvals and reporting.'}
+                                {newUser.role === 'super_admin' && 'Super Admins have unrestricted access to all system features.'}
+                            </p>
+                        </div>
+                        <Button
+                            className="w-full gradient-primary"
+                            onClick={handleAddUser}
+                            disabled={addUserLoading || !newUser.email || !newUser.password}
+                        >
+                            {addUserLoading ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating User...</>
+                            ) : (
+                                <><Plus className="mr-2 h-4 w-4" /> Create User</>
+                            )}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
