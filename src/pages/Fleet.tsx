@@ -1331,13 +1331,14 @@ export default function Fleet() {
                           <TableRow>
                             <TableHead>Document Type</TableHead>
                             <TableHead>Entity</TableHead>
+                            <TableHead>V. Reg No. / Driver</TableHead>
                             <TableHead>Document Number</TableHead>
                             <TableHead>Expiry Date</TableHead>
                             <TableHead>Status</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {documents.map((doc) => {
+                          {filteredDocuments.map((doc) => {
                             const isExpired = isPast(new Date(doc.expiry_date));
                             const days = differenceInDays(new Date(doc.expiry_date), new Date());
                             const isExpiring = days <= 30 && days > 0;
@@ -1351,8 +1352,11 @@ export default function Fleet() {
                                     ) : (
                                       <User className="w-4 h-4 text-muted-foreground" />
                                     )}
-                                    {doc.entity_name || doc.entity_id.slice(0, 8)}
+                                    <span className="capitalize">{doc.entity_type}</span>
                                   </div>
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                  {doc.entity_name || doc.entity_id.slice(0, 8)}
                                 </TableCell>
                                 <TableCell>{doc.document_number || "-"}</TableCell>
                                 <TableCell>{format(new Date(doc.expiry_date), "MMM d, yyyy")}</TableCell>
