@@ -1049,18 +1049,21 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           full_name: string | null
           updated_at: string
+          is_blocked: boolean
         }
         Insert: {
           id: string
           role?: Database["public"]["Enums"]["user_role"]
           full_name?: string | null
           updated_at?: string
+          is_blocked?: boolean
         }
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           full_name?: string | null
           updated_at?: string
+          is_blocked?: boolean
         }
         Relationships: [
           {

@@ -22,6 +22,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Login = lazy(() => import("./pages/Login"));
 const Settings = lazy(() => import("./pages/Settings"));
 const PendingApproval = lazy(() => import("./pages/PendingApproval"));
+const Blocked = lazy(() => import("./pages/Blocked"));
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Configure caching: data stays fresh for 5 minutes, cached for 15 minutes
@@ -49,6 +50,7 @@ const App = () => (
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/pending-approval" element={<PendingApproval />} />
+                <Route path="/blocked" element={<Blocked />} />
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/fleet" element={<ProtectedRoute><Fleet /></ProtectedRoute>} />
                 <Route path="/fleet/truck/:id" element={<ProtectedRoute><TruckDetails /></ProtectedRoute>} />

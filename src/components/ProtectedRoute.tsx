@@ -18,8 +18,14 @@ export function ProtectedRoute({ children, allowAdmin = false, allowSuperAdmin =
         return <Navigate to="/pending-approval" replace />;
     }
 
-    // Redirect authorized users away from pending approval page
-    if (profile?.role !== 'pending' && location.pathname === '/pending-approval') {
+    // Redirect blocked users to the blocked page
+    if (profile?.is_blocked && location.pathname !== '/blocked') {
+        return <Navigate to="/blocked" replace />;
+    }
+
+    // Redirect authorized users away from status pages
+    const isStatusPage = ['/pending-approval', '/blocked'].includes(location.pathname);
+    if (user && profile && !profile.is_blocked && profile.role !== 'pending' && isStatusPage) {
         return <Navigate to="/" replace />;
     }
 

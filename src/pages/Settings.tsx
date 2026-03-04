@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/hooks/useAuth"
-import { ShieldAlert, Users, History, Loader2, Plus, Eye, EyeOff } from "lucide-react"
+import { ShieldAlert, Users, History, Loader2, Plus, Eye, EyeOff, Shield, ShieldOff, Trash2, AlertTriangle } from "lucide-react"
 import { useEffect, useState } from "react"
 import { supabase } from "@/integrations/supabase/client"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -43,6 +43,14 @@ export default function Settings() {
         password: "",
         role: "manager" as "super_admin" | "admin" | "manager" | "pending",
     })
+
+    // Delete user confirmation state
+    const [deleteUserConfirm, setDeleteUserConfirm] = useState<{ open: boolean, userId: string, email: string }>({
+        open: false,
+        userId: "",
+        email: ""
+    })
+    const [deleteLoading, setDeleteLoading] = useState(false)
 
     useEffect(() => {
         if (isAdmin) {
@@ -132,6 +140,46 @@ export default function Settings() {
         }
     }
 
+    const handleToggleBlock = async (userId: string, currentBlocked: boolean) => {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ is_blocked: !currentBlocked, updated_at: new Date().toISOString() })
+                .eq('id', userId)
+
+            if (error) throw error
+            toast({
+                title: currentBlocked ? "User unblocked" : "User blocked",
+                description: `User has been ${currentBlocked ? 'unblocked' : 'blocked'} successfully.`
+            })
+            fetchData()
+        } catch (err: any) {
+            toast({ title: "Action failed", description: err.message, variant: "destructive" })
+        }
+    }
+
+    const handleDeleteUser = async () => {
+        if (!deleteUserConfirm.userId) return
+
+        try {
+            setDeleteLoading(true)
+            const { data, error } = await supabase.functions.invoke("delete-user", {
+                body: { userId: deleteUserConfirm.userId },
+            })
+
+            if (error) throw error
+            if (data?.error) throw new Error(data.error)
+
+            toast({ title: "User deleted", description: "The user has been permanently removed." })
+            setDeleteUserConfirm({ open: false, userId: "", email: "" })
+            fetchData()
+        } catch (err: any) {
+            toast({ title: "Deletion failed", description: err.message, variant: "destructive" })
+        } finally {
+            setDeleteLoading(false)
+        }
+    }
+
     if (!isAdmin) {
         return (
             <div className="flex h-[50vh] flex-col items-center justify-center space-y-4">
@@ -192,6 +240,7 @@ export default function Settings() {
                                                 <TableHead>Name</TableHead>
                                                 <TableHead>Role</TableHead>
                                                 <TableHead>Last Updated</TableHead>
+                                                <TableHead className="text-right">Actions</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -229,6 +278,30 @@ export default function Settings() {
                                                         </Select>
                                                     </TableCell>
                                                     <TableCell>{u.updated_at ? format(new Date(u.updated_at), 'PPP') : 'Never'}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="icon"
+                                                                className={`h-8 w-8 ${u.is_blocked ? 'text-destructive hover:text-destructive' : 'text-muted-foreground'}`}
+                                                                title={u.is_blocked ? "Unblock user" : "Block user"}
+                                                                onClick={() => handleToggleBlock(u.id, u.is_blocked)}
+                                                            >
+                                                                {u.is_blocked ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                                                            </Button>
+                                                            {isSuperAdmin && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive hover:border-destructive/30"
+                                                                    title="Delete user"
+                                                                    onClick={() => setDeleteUserConfirm({ open: true, userId: u.id, email: u.full_name || 'this user' })}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -398,6 +471,36 @@ export default function Settings() {
                                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating User...</>
                             ) : (
                                 <><Plus className="mr-2 h-4 w-4" /> Create User</>
+                            )}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+            {/* Delete User Confirmation Dialog */}
+            <Dialog open={deleteUserConfirm.open} onOpenChange={(open) => setDeleteUserConfirm({ ...deleteUserConfirm, open })}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-5 w-5" />
+                            Confirm Permanent Deletion
+                        </DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete <span className="font-bold text-foreground">{deleteUserConfirm.email}</span>? This action cannot be undone and will remove all their access to the system.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-end gap-3 mt-4">
+                        <Button variant="outline" onClick={() => setDeleteUserConfirm({ ...deleteUserConfirm, open: false })}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDeleteUser}
+                            disabled={deleteLoading}
+                        >
+                            {deleteLoading ? (
+                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...</>
+                            ) : (
+                                "Confirm Delete"
                             )}
                         </Button>
                     </div>
