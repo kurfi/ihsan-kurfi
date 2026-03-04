@@ -41,7 +41,7 @@ export default function Settings() {
         full_name: "",
         email: "",
         password: "",
-        role: "manager" as "super_admin" | "admin" | "manager",
+        role: "manager" as "super_admin" | "admin" | "manager" | "pending",
     })
 
     useEffect(() => {
@@ -114,6 +114,21 @@ export default function Settings() {
             toast({ title: "Failed to create user", description: err.message, variant: "destructive" })
         } finally {
             setAddUserLoading(false)
+        }
+    }
+
+    const handleUpdateUserRole = async (userId: string, newRole: string) => {
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ role: newRole as any, updated_at: new Date().toISOString() })
+                .eq('id', userId)
+
+            if (error) throw error
+            toast({ title: "Role updated", description: "User role has been updated successfully." })
+            fetchData()
+        } catch (err: any) {
+            toast({ title: "Update failed", description: err.message, variant: "destructive" })
         }
     }
 
@@ -191,9 +206,27 @@ export default function Settings() {
                                                 <TableRow key={u.id}>
                                                     <TableCell className="font-medium">{u.full_name || 'N/A'}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant={u.role === 'super_admin' ? 'destructive' : u.role === 'admin' ? 'default' : 'secondary'}>
-                                                            {u.role.replace('_', ' ')}
-                                                        </Badge>
+                                                        <Select
+                                                            defaultValue={u.role}
+                                                            onValueChange={(v) => handleUpdateUserRole(u.id, v)}
+                                                            disabled={!isSuperAdmin && u.role === 'super_admin'}
+                                                        >
+                                                            <SelectTrigger className="w-[140px] h-8">
+                                                                <SelectValue>
+                                                                    <Badge variant={u.role === 'super_admin' ? 'destructive' : u.role === 'admin' ? 'default' : u.role === 'pending' ? 'outline' : 'secondary'} className="border-none p-0">
+                                                                        {u.role.replace('_', ' ')}
+                                                                    </Badge>
+                                                                </SelectValue>
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="pending">Pending</SelectItem>
+                                                                <SelectItem value="manager">Manager</SelectItem>
+                                                                <SelectItem value="admin">Admin</SelectItem>
+                                                                {isSuperAdmin && (
+                                                                    <SelectItem value="super_admin">Super Admin</SelectItem>
+                                                                )}
+                                                            </SelectContent>
+                                                        </Select>
                                                     </TableCell>
                                                     <TableCell>{u.updated_at ? format(new Date(u.updated_at), 'PPP') : 'Never'}</TableCell>
                                                 </TableRow>

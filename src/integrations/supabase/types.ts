@@ -1281,7 +1281,7 @@ export type Database = {
       | "bonus"
       | "deposit"
       | "other",
-      user_role: "super_admin" | "admin" | "manager"
+      user_role: "super_admin" | "admin" | "manager" | "pending"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1431,7 +1431,7 @@ export const Constants = {
         "bonus",
         "deposit",
       ],
-      user_role: ["super_admin", "admin", "manager"],
+      user_role: ["super_admin", "admin", "manager", "pending"],
     },
   },
 } as const

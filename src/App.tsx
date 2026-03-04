@@ -21,6 +21,7 @@ const DriverDetails = lazy(() => import("./pages/DriverDetails"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Login = lazy(() => import("./pages/Login"));
 const Settings = lazy(() => import("./pages/Settings"));
+const PendingApproval = lazy(() => import("./pages/PendingApproval"));
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 // Configure caching: data stays fresh for 5 minutes, cached for 15 minutes
@@ -47,6 +48,7 @@ const App = () => (
             <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground">Loading...</div>}>
               <Routes>
                 <Route path="/login" element={<Login />} />
+                <Route path="/pending-approval" element={<PendingApproval />} />
                 <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
                 <Route path="/fleet" element={<ProtectedRoute><Fleet /></ProtectedRoute>} />
                 <Route path="/fleet/truck/:id" element={<ProtectedRoute><TruckDetails /></ProtectedRoute>} />

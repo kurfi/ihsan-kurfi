@@ -13,6 +13,16 @@ export function ProtectedRoute({ children, allowAdmin = false, allowSuperAdmin =
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    // Redirect pending users to the pending approval page
+    if (profile?.role === 'pending' && location.pathname !== '/pending-approval') {
+        return <Navigate to="/pending-approval" replace />;
+    }
+
+    // Redirect authorized users away from pending approval page
+    if (profile?.role !== 'pending' && location.pathname === '/pending-approval') {
+        return <Navigate to="/" replace />;
+    }
+
     // Simple role check based on props
     if (allowSuperAdmin && profile?.role !== 'super_admin') {
         return <Navigate to="/" replace />; // Or a 'Not Authorized' page
