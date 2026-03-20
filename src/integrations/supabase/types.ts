@@ -341,8 +341,6 @@ export type Database = {
           payment_date: string
           payment_reference: string | null
           period_covered: string | null
-          vat_paid: boolean | null
-          vat_paid_amount: number | null
         }
         Insert: {
           amount_received?: number
@@ -352,8 +350,6 @@ export type Database = {
           payment_date: string
           payment_reference?: string | null
           period_covered?: string | null
-          vat_paid?: boolean | null
-          vat_paid_amount?: number | null
         }
         Update: {
           amount_received?: number
@@ -363,8 +359,6 @@ export type Database = {
           payment_date?: string
           payment_reference?: string | null
           period_covered?: string | null
-          vat_paid?: boolean | null
-          vat_paid_amount?: number | null
         }
         Relationships: []
       }
