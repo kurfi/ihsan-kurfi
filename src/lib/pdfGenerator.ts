@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable, { UserOptions } from 'jspdf-autotable';
 import { format } from 'date-fns';
+import { calculateVAT, calculateGrandTotal, VAT_LABEL } from './vatConfig';
 
 interface jsPDFWithPlugin extends jsPDF {
     lastAutoTable: {
@@ -25,6 +26,8 @@ interface Order {
     gate_pass_number?: string | null;
     loading_manifest_number?: string | null;
     delivery_otp?: string | null;
+    vat_amount?: number | null;
+    grand_total?: number | null;
 }
 
 interface Customer {
@@ -75,6 +78,10 @@ function addHeader(doc: jsPDF, title: string) {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text('Cement Distribution Company', 105, 27, { align: 'center' });
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('TIN: XXXX-XXXX-XXXX', 105, 34, { align: 'center' });
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
@@ -338,8 +345,8 @@ export function generateInvoice(
 
     // Invoice Items
     const subtotal = order.total_amount || 0;
-    const vat = 0; // Add VAT calculation if needed
-    const total = subtotal + vat;
+    const vat = order.vat_amount ?? calculateVAT(subtotal);
+    const total = order.grand_total ?? calculateGrandTotal(subtotal);
 
     autoTable(doc, {
         startY: yPos,
@@ -362,7 +369,7 @@ export function generateInvoice(
     doc.text(`₦${subtotal.toLocaleString()}`, 170, yPos, { align: 'right' });
 
     yPos += 7;
-    doc.text('VAT (0%):', 130, yPos);
+    doc.text(VAT_LABEL + ':', 130, yPos);
     doc.text(`₦${vat.toLocaleString()}`, 170, yPos, { align: 'right' });
 
     yPos += 10;
@@ -450,6 +457,21 @@ export function generateReceipt(
     yPos += 6;
     if (order) {
         doc.text(`Order Number: ${order.order_number || 'N/A'}`, 20, yPos);
+        yPos += 6;
+        const receiptSubtotal = order.total_amount || 0;
+        const receiptVat = order.vat_amount ?? calculateVAT(receiptSubtotal);
+        const receiptTotal = order.grand_total ?? calculateGrandTotal(receiptSubtotal);
+        doc.setFont('helvetica', 'bold');
+        yPos += 6;
+        doc.text('Subtotal:', 20, yPos);
+        doc.text(`₦${receiptSubtotal.toLocaleString()}`, 100, yPos, { align: 'right' });
+        yPos += 6;
+        doc.text(VAT_LABEL + ':', 20, yPos);
+        doc.text(`₦${receiptVat.toLocaleString()}`, 100, yPos, { align: 'right' });
+        yPos += 6;
+        doc.text('Grand Total:', 20, yPos);
+        doc.text(`₦${receiptTotal.toLocaleString()}`, 100, yPos, { align: 'right' });
+        doc.setFont('helvetica', 'normal');
     }
 
     yPos += 20;

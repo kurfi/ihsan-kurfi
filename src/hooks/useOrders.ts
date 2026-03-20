@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Database } from "@/integrations/supabase/types";
+import { calculateVAT, calculateGrandTotal } from "@/lib/vatConfig";
 
 export type OrderStatus = Database["public"]["Enums"]["order_status"];
 export type ProductUnit = Database["public"]["Enums"]["product_unit"];
@@ -54,6 +55,8 @@ export interface Order {
   truck?: { plate_number: string; capacity_tons: number | null } | null;
   driver?: { name: string; phone: string | null } | null;
   purchases?: Array<{ atc_number: string | null; cap_number: string | null }> | null;
+  vat_amount?: number | null;
+  grand_total?: number | null;
 }
 
 export function useOrders(enabled = true) {
@@ -136,6 +139,8 @@ export function useCreateOrder() {
       // We process the order directly.
       if (!order.depot_id) throw new Error("Product Source is required");
 
+      const total_amount = order.total_amount ?? 0;
+
       // 2. Create Order
       const { transport_cost, ...orderData } = order;
 
@@ -143,7 +148,9 @@ export function useCreateOrder() {
         .from("orders")
         .insert({
           ...orderData,
-          unit: orderData.unit || "bags"
+          unit: orderData.unit || "bags",
+          vat_amount: calculateVAT(total_amount),
+          grand_total: calculateGrandTotal(total_amount),
         } as any)
         .select()
         .single();
@@ -355,7 +362,15 @@ export function useUpdateOrder() {
       payment_terms?: string;
       atc_number?: string;
       cap_number?: string;
+      vat_amount?: number;
+      grand_total?: number;
     }) => {
+      // Recompute VAT fields if total_amount is being updated
+      if (updates.total_amount !== undefined) {
+        updates.vat_amount = calculateVAT(updates.total_amount);
+        updates.grand_total = calculateGrandTotal(updates.total_amount);
+      }
+
       // 1. Update Order fields (including transport_cost)
       const { data, error } = await supabase
         .from("orders")
