@@ -366,13 +366,13 @@ export function useTripProfitability(orderId: string) {
     queryKey: ["trip-profit", orderId],
     queryFn: async () => {
       const [orderRes, expensesRes] = await Promise.all([
-        supabase.from("orders").select("total_amount").eq("id", orderId).single(),
+        supabase.from("orders").select("total_amount, vat_paid_amount").eq("id", orderId).single(),
         supabase.from("expenses").select("amount").eq("order_id", orderId),
       ]);
 
       if (orderRes.error) throw orderRes.error;
 
-      const revenue = orderRes.data?.total_amount || 0;
+      const revenue = (orderRes.data?.total_amount || 0) + (orderRes.data?.vat_paid_amount || 0);
       const expenses = expensesRes.data?.reduce((sum, e) => sum + e.amount, 0) || 0;
       const profit = revenue - expenses;
 

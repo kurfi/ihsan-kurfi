@@ -377,7 +377,18 @@ export function generateInvoice(
     doc.text('TOTAL:', 130, yPos);
     doc.text(`₦${total.toLocaleString()}`, 170, yPos, { align: 'right' });
 
-    yPos += 15;
+    yPos += 8;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(120, 120, 120);
+    doc.text(
+        'VAT shown for compliance purposes. Confirm payment of VAT with cashier.',
+        20,
+        yPos
+    );
+    doc.setTextColor(0, 0, 0);
+
+    yPos += 12;
 
     // Payment Status
     doc.setFontSize(10);

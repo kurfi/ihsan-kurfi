@@ -341,6 +341,8 @@ export type Database = {
           payment_date: string
           payment_reference: string | null
           period_covered: string | null
+          vat_paid: boolean | null
+          vat_paid_amount: number | null
         }
         Insert: {
           amount_received?: number
@@ -350,6 +352,8 @@ export type Database = {
           payment_date: string
           payment_reference?: string | null
           period_covered?: string | null
+          vat_paid?: boolean | null
+          vat_paid_amount?: number | null
         }
         Update: {
           amount_received?: number
@@ -359,6 +363,8 @@ export type Database = {
           payment_date?: string
           payment_reference?: string | null
           period_covered?: string | null
+          vat_paid?: boolean | null
+          vat_paid_amount?: number | null
         }
         Relationships: []
       }
@@ -518,6 +524,11 @@ export type Database = {
           other_trip_costs: number | null
           sales_price_per_unit: number | null
           atc_number: string | null
+          vat_amount: number | null
+          vat_rate: number | null
+          grand_total: number | null
+          vat_paid: boolean | null
+          vat_paid_amount: number | null
         }
         Insert: {
           cap_number?: string | null
@@ -551,6 +562,11 @@ export type Database = {
           other_trip_costs?: number | null
           sales_price_per_unit?: number | null
           atc_number?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+          grand_total?: number | null
+          vat_paid?: boolean | null
+          vat_paid_amount?: number | null
         }
         Update: {
           cap_number?: string | null
@@ -584,6 +600,11 @@ export type Database = {
           other_trip_costs?: number | null
           sales_price_per_unit?: number | null
           atc_number?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
+          grand_total?: number | null
+          vat_paid?: boolean | null
+          vat_paid_amount?: number | null
         }
         Relationships: [
           {

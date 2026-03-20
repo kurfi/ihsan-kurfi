@@ -57,6 +57,8 @@ export interface Order {
   purchases?: Array<{ atc_number: string | null; cap_number: string | null }> | null;
   vat_amount?: number | null;
   grand_total?: number | null;
+  vat_paid?: boolean | null;
+  vat_paid_amount?: number | null;
 }
 
 export function useOrders(enabled = true) {

@@ -293,6 +293,15 @@ export default function Orders() {
     );
   };
 
+  const handlePrintInvoice = (order: Order) => {
+    const customer = customers.find(c => c.id === order.customer_id);
+    if (!customer) {
+      toast({ title: "Customer not found", description: "Cannot generate invoice without customer details.", variant: "destructive" });
+      return;
+    }
+    generateInvoice(order, customer);
+  };
+
   const handleWaybillUpload = async (orderId: string, file: File) => {
     setUploadingWaybill(true);
     try {
@@ -316,6 +325,7 @@ export default function Orders() {
       case 'view': setSelectedOrder(orderId); setDetailDialogOpen(true); break;
       case 'next': handleNextStatus(orderId, order.status); break;
       case 'manifest': handlePrintLoadingManifest(order); break;
+      case 'invoice': handlePrintInvoice(order); break;
       case 'confirm_payment': confirmPayment.mutate(orderId); break;
       case 'edit': setOrderToEdit(order); setEditDialogOpen(true); break;
       case 'delete': setOrderToDelete(order); setDeleteDialogOpen(true); break;
@@ -492,6 +502,9 @@ export default function Orders() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleOrderAction('view', order.id)}>Details</DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleOrderAction('edit', order.id)}>Edit</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOrderAction('invoice', order.id)}>
+                                  <Printer className="w-4 h-4 mr-2" />Print Invoice
+                                </DropdownMenuItem>
                                 {order.status !== 'delivered' && (
                                   <DropdownMenuItem onClick={() => handleOrderAction('delete', order.id)} className="text-destructive">Delete</DropdownMenuItem>
                                 )}

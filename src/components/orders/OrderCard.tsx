@@ -136,9 +136,17 @@ export function OrderCard({
                 <span>{order.cement_type} • {order.quantity} {order.unit === 'tons' ? 'T' : 'Bags'}</span>
               </div>
             </div>
-            <Badge className={statusColors[order.status]}>
-              {formatStatus(order.status)}
-            </Badge>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge className={statusColors[order.status]}>
+                {formatStatus(order.status)}
+              </Badge>
+              {order.vat_paid === true && (
+                <Badge className="bg-green-100 text-green-800 text-xs">VAT Collected</Badge>
+              )}
+              {order.vat_paid === false && order.payment_status === 'Confirmed' && (
+                <Badge variant="secondary" className="text-xs">VAT Waived</Badge>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-2 pt-2 border-t">

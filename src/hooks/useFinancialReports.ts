@@ -94,7 +94,30 @@ export function useTotalReceivables() {
 // Helper function to calculate all-time totals
 export function useAllTimeTotals() {
     const { data: monthlyPL = [] } = useMonthlyProfitLoss();
+    const { data: vatData } = useVatCollected();
     const totalRevenue = monthlyPL.reduce((sum, m) => sum + (m.total_revenue || 0), 0);
     const totalProfit = monthlyPL.reduce((sum, m) => sum + (m.net_profit || 0), 0);
-    return { totalRevenue, totalProfit };
+    const totalVatCollected = vatData?.totalVatCollected || 0;
+    return { totalRevenue, totalProfit, totalVatCollected };
+}
+
+// Hook to fetch total VAT collected from orders where vat_paid = true
+export function useVatCollected() {
+    return useQuery({
+        queryKey: ["vat-collected"],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("orders")
+                .select("vat_paid_amount")
+                .eq("vat_paid", true);
+
+            if (error) throw error;
+
+            const totalVatCollected = (data || []).reduce(
+                (sum, order) => sum + (order.vat_paid_amount || 0),
+                0
+            );
+            return { totalVatCollected };
+        },
+    });
 }
